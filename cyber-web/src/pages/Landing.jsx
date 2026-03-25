@@ -7,10 +7,9 @@ export default function Landing() {
 
   const handleLogin = async () => {
     try {
-      // Uncomment when Firebase keys are provided in .env:
-      // await signInWithGoogle();
+      await signInWithGoogle();
       
-      // Navigate to the main app on successful login (simulated for now)
+      // Navigate to the main app on successful login
       navigate('/feed');
     } catch (error) {
       console.error("Login failed", error);

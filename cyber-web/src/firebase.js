@@ -1,15 +1,15 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as fbSignOut } from "firebase/auth";
 
-// Your web app's Firebase configuration
-// Replace these with your environment variables when deploying
+// Swiftie Web App Firebase configuration
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSy_MOCK_KEY",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "mock-app.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "mock-app",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "mock-app.appspot.com",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123:web:456"
+  apiKey: "AIzaSyACxn6M_3vg1X6NIMypPb8GthqXq6drimw",
+  authDomain: "swiftie-d0ea0.firebaseapp.com",
+  projectId: "swiftie-d0ea0",
+  storageBucket: "swiftie-d0ea0.firebasestorage.app",
+  messagingSenderId: "658364785258",
+  appId: "1:658364785258:web:7d7d6524e5a4ea729be013",
+  measurementId: "G-VP302Z407Q"
 };
 
 // Initialize Firebase
