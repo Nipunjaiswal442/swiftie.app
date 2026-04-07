@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signInWithGoogle } from '../firebase';
 import { exchangeFirebaseToken } from '../services/api';
-import { initUserKeys, uploadPreKeys } from '../services/encryption';
+import { initUserKeys } from '../services/encryption';
+import { uploadPreKeys } from '../services/api';
 
 export default function Landing() {
   const navigate = useNavigate();
