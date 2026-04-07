@@ -1,60 +1,59 @@
-import dotenv from 'dotenv';
-dotenv.config();
-
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
 import { createServer } from 'http';
+import { Server } from 'socket.io';
 import { connectDB } from './config/db';
-import { initFirebase } from './config/firebase';
-import { initSocket } from './config/socket';
-import authRoutes from './routes/auth';
-import userRoutes from './routes/users';
-import conversationRoutes from './routes/conversations';
-import messageRoutes from './routes/messages';
-import keyRoutes from './routes/keys';
+import { authRouter } from './routes/auth';
+import { usersRouter } from './routes/users';
+import { postsRouter } from './routes/posts';
+import { messagesRouter } from './routes/messages';
+import { keysRouter } from './routes/keys';
+import { rateLimiter } from './middleware/rateLimiter';
+import { errorHandler } from './middleware/errorHandler';
+import { initSocketHandler } from './socket/socketHandler';
 
 const app = express();
 const httpServer = createServer(app);
 
-app.use(helmet());
-app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:3000' }));
-app.use(express.json({ limit: '10mb' }));
-
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  standardHeaders: true,
-  legacyHeaders: false,
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.CORS_ORIGIN || '*',
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
 });
-app.use('/api/auth', limiter);
 
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/conversations', conversationRoutes);
-app.use('/api/conversations', messageRoutes);
-app.use('/api/keys', keyRoutes);
+// ── Middleware ──────────────────────────────────────────────
+app.use(cors({ origin: process.env.CORS_ORIGIN || '*', credentials: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+app.use(rateLimiter);
+
+// ── Routes ──────────────────────────────────────────────────
+const API = '/api/v1';
+app.use(`${API}/auth`, authRouter);
+app.use(`${API}/users`, usersRouter);
+app.use(`${API}/posts`, postsRouter);
+app.use(`${API}/messages`, messagesRouter);
+app.use(`${API}/conversations`, messagesRouter);
+app.use(`${API}/keys`, keysRouter);
 
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok' });
+  res.json({ success: true, data: { status: 'ok', env: process.env.NODE_ENV } });
 });
 
-const PORT = process.env.PORT || 5000;
+// ── Error handler (must be last) ────────────────────────────
+app.use(errorHandler);
 
-const start = async (): Promise<void> => {
-  try {
-    initFirebase();
-    await connectDB();
-    initSocket(httpServer);
+// ── Socket.IO ───────────────────────────────────────────────
+initSocketHandler(io);
 
-    httpServer.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-  }
-};
+// ── Start ───────────────────────────────────────────────────
+const PORT = parseInt(process.env.PORT || '5000', 10);
 
-start();
+connectDB().then(() => {
+  httpServer.listen(PORT, () => {
+    console.log(`[swiftie] server running on port ${PORT}`);
+  });
+});

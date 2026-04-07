@@ -1,31 +1,31 @@
 {
   "name": "swiftie-server",
   "version": "1.0.0",
-  "description": "Swiftie messaging app backend",
+  "description": "Swiftie backend — Express.js + Socket.IO + MongoDB",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn src/index.ts",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "express": "^4.21.0",
-    "express-rate-limit": "^7.4.0",
-    "express-validator": "^7.2.0",
-    "firebase-admin": "^12.6.0",
-    "helmet": "^8.0.0",
-    "mongoose": "^8.7.0",
-    "socket.io": "^4.8.0",
-    "uuid": "^10.0.0"
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.3.1",
+    "firebase-admin": "^12.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.4.1",
+    "multer": "^1.4.5-lts.1",
+    "socket.io": "^4.7.5"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
-    "@types/express": "^5.0.0",
-    "@types/node": "^22.7.0",
-    "@types/uuid": "^10.0.0",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/multer": "^1.4.11",
+    "@types/node": "^20.14.2",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.4.5"
   }
 }

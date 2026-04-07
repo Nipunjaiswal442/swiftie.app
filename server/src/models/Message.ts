@@ -1,25 +1,41 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IMessage extends Document {
-  conversationId: Types.ObjectId;
-  senderId: Types.ObjectId;
-  type: 'text' | 'image';
+  conversationId: string;
+  sender: mongoose.Types.ObjectId;
+  recipient: mongoose.Types.ObjectId;
   ciphertext: string;
-  messageType: number;
-  photoUrl: string | null;
+  messageType: 'text' | 'image';
+  encryptedMediaUrl: string;
+  senderRatchetKey: string;
+  messageNumber: number;
+  previousChainLength: number;
   timestamp: Date;
+  deliveredAt: Date | null;
+  readAt: Date | null;
+  isDeleted: boolean;
 }
 
-const messageSchema = new Schema<IMessage>({
-  conversationId: { type: Schema.Types.ObjectId, ref: 'Conversation', required: true },
-  senderId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  type: { type: String, enum: ['text', 'image'], default: 'text' },
-  ciphertext: { type: String, required: true },
-  messageType: { type: Number, required: true },
-  photoUrl: { type: String, default: null },
-  timestamp: { type: Date, default: Date.now },
-});
+const MessageSchema = new Schema<IMessage>(
+  {
+    conversationId: { type: String, required: true, index: true },
+    sender: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    recipient: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    // Server stores ONLY ciphertext — never plaintext
+    ciphertext: { type: String, required: true },
+    messageType: { type: String, enum: ['text', 'image'], default: 'text' },
+    encryptedMediaUrl: { type: String, default: '' },
+    senderRatchetKey: { type: String, default: '' },
+    messageNumber: { type: Number, default: 0 },
+    previousChainLength: { type: Number, default: 0 },
+    timestamp: { type: Date, default: Date.now, index: true },
+    deliveredAt: { type: Date, default: null },
+    readAt: { type: Date, default: null },
+    isDeleted: { type: Boolean, default: false },
+  },
+  { timestamps: false }
+);
 
-messageSchema.index({ conversationId: 1, timestamp: -1 });
+MessageSchema.index({ conversationId: 1, timestamp: 1 });
 
-export default mongoose.model<IMessage>('Message', messageSchema);
+export const Message = mongoose.model<IMessage>('Message', MessageSchema);
