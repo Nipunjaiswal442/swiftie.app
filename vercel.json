@@ -1,5 +1,6 @@
 {
-  "outputDirectory": "cyber-web/dist",
+  "buildCommand": "cd mobile && npm install && npx expo export --platform web",
+  "outputDirectory": "mobile/dist",
   "rewrites": [
     {
       "source": "/(.*)",
