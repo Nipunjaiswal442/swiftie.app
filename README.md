@@ -19,7 +19,7 @@
 
 ## Overview
 
-Swiftie is an Indian social media and messaging platform combining social networking (profiles, photo sharing, social feed) with a secure end-to-end encrypted messaging system powered by the Signal Protocol. Built with React Native (TypeScript) for cross-platform mobile deployment and a React web app for browser access.
+Swiftie is an Indian social media and messaging platform combining social networking (profiles, photo sharing, social feed) with a secure end-to-end encrypted messaging system powered by the Signal Protocol. Built with React Native (TypeScript) for a single cross-platform codebase covering iOS, Android, and Web.
 
 **Developer:** Nipun Jaiswal
 **GitHub:** [github.com/Nipunjaiswal442/swiftie.app](https://github.com/Nipunjaiswal442/swiftie.app)
@@ -33,7 +33,7 @@ Swiftie is an Indian social media and messaging platform combining social networ
 | Layer | Technology | Version |
 |-------|-----------|---------|
 | Mobile UI | React Native | 0.74+ |
-| Web UI | React + Vite | 19.x |
+| Web UI | React Native Web (Expo) | SDK 52 |
 | Language | TypeScript | 5.x (strict) |
 | Navigation | React Navigation | 6.x |
 | Backend | Node.js + Express.js | 20 LTS / 4.x |
@@ -199,19 +199,10 @@ swiftie.app/
 ├── vercel.json               # Vercel deployment config
 ├── landing/
 │   └── index.html            # Marketing landing page (static)
-├── cyber-web/                # React web app (Vite)
-│   ├── src/
-│   │   ├── App.jsx
-│   │   ├── firebase.js
-│   │   ├── services/
-│   │   │   ├── api.js        # Axios + JWT interceptor
-│   │   │   ├── socket.js     # Socket.IO client
-│   │   │   └── encryption.js # E2E crypto (Web Crypto API)
-│   │   └── pages/
-│   │       ├── Landing.jsx, Feed.jsx, Profile.jsx
-│   │       ├── Explore.jsx, PostDrop.jsx, Notifications.jsx
-│   │       ├── Messages.jsx  # Conversations list
-│   │       └── Chat.jsx      # E2E encrypted chat
+├── mobile/                   # Swiftie app (Expo + React Native + Web)
+│   ├── app/                  # Expo Router screens (welcome, feed, chat, profile...)
+│   ├── components/           # Reusable UI (cards, landing sections, effects)
+│   ├── services/             # API, socket, encryption, Firebase integrations
 │   └── package.json
 └── server/                   # Express backend (TypeScript)
     ├── src/
@@ -255,12 +246,11 @@ cp .env.example .env   # Fill in your secrets
 npm run dev            # Starts on http://localhost:5000
 ```
 
-### 3. Web App
+### 3. Web App (React Native Web via Expo)
 ```bash
-cd cyber-web
+cd mobile
 npm install
-cp .env.example .env   # Set VITE_API_BASE_URL=http://localhost:5000/api/v1
-npm run dev            # Starts on http://localhost:5173
+npm run web            # Starts Expo web dev server
 ```
 
 ### 4. Mobile (React Native)
@@ -288,16 +278,10 @@ RATE_LIMIT_WINDOW=15
 RATE_LIMIT_MAX=100
 ```
 
-### Web Client (`cyber-web/.env`)
+### Web Client (`mobile/.env`)
 ```env
-VITE_API_BASE_URL=http://localhost:5000/api/v1
-VITE_SOCKET_URL=http://localhost:5000
-VITE_FIREBASE_API_KEY=your_key
-VITE_FIREBASE_AUTH_DOMAIN=swiftie-xxxxx.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=swiftie-xxxxx
-VITE_FIREBASE_STORAGE_BUCKET=swiftie-xxxxx.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
-VITE_FIREBASE_APP_ID=1:123:web:abc
+EXPO_PUBLIC_API_BASE_URL=http://localhost:5000/api/v1
+EXPO_PUBLIC_SOCKET_URL=http://localhost:5000
 ```
 
 > **NEVER commit `.env` files or `firebase-service-account.json` to Git.**

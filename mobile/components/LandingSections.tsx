@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 import { colors } from '../constants/theme';
 
 // ── Features ─────────────────────────────────────────────────
@@ -14,20 +15,20 @@ const FEATURES = [
 
 export function FeaturesSection() {
   return (
-    <View style={styles.section}>
+    <Animated.View entering={FadeInUp.duration(450)} style={styles.section}>
       <Text style={styles.sectionTitle}>
         <Text style={{ color: colors.saffron }}>//</Text> FEATURES
       </Text>
       <View style={styles.grid}>
         {FEATURES.map((f, i) => (
-          <View key={i} style={styles.featureCard}>
+          <Animated.View key={i} entering={FadeInUp.delay(i * 70).duration(420)} style={styles.featureCard}>
             <Text style={styles.featureIcon}>{f.icon}</Text>
             <Text style={styles.featureTitle}>{f.title}</Text>
             <Text style={styles.featureDesc}>{f.desc}</Text>
-          </View>
+          </Animated.View>
         ))}
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -47,25 +48,29 @@ const TECH = [
 
 export function TechSection() {
   return (
-    <View style={styles.section}>
+    <Animated.View entering={FadeInUp.duration(450)} style={styles.section}>
       <Text style={styles.sectionTitle}>
         <Text style={{ color: colors.green }}>//</Text> TECH STACK
       </Text>
       <View style={styles.techGrid}>
         {TECH.map((t, i) => (
-          <View key={i} style={[styles.techPill, { borderColor: t.color }]}>
+          <Animated.View
+            key={i}
+            entering={FadeInUp.delay(i * 45).duration(350)}
+            style={[styles.techPill, { borderColor: t.color }]}
+          >
             <Text style={[styles.techText, { color: t.color }]}>{t.name}</Text>
-          </View>
+          </Animated.View>
         ))}
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
 // ── Security Flow ────────────────────────────────────────────
 export function SecuritySection() {
   return (
-    <View style={styles.section}>
+    <Animated.View entering={FadeInUp.duration(450)} style={styles.section}>
       <Text style={styles.sectionTitle}>
         <Text style={{ color: colors.saffron }}>//</Text> ENCRYPTION FLOW
       </Text>
@@ -83,7 +88,7 @@ export function SecuritySection() {
       <Text style={styles.securityNote}>
         Your plaintext never leaves your device. The server handles only ciphertext.
       </Text>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -107,16 +112,16 @@ const STATS = [
 
 export function StatsSection() {
   return (
-    <View style={styles.section}>
+    <Animated.View entering={FadeInUp.duration(450)} style={styles.section}>
       <View style={styles.statsRow}>
         {STATS.map((s, i) => (
-          <View key={i} style={styles.statBox}>
+          <Animated.View key={i} entering={FadeInUp.delay(i * 80).duration(400)} style={styles.statBox}>
             <Text style={styles.statValue}>{s.value}</Text>
             <Text style={styles.statLabel}>{s.label}</Text>
-          </View>
+          </Animated.View>
         ))}
       </View>
-    </View>
+    </Animated.View>
   );
 }
 

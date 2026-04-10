@@ -2,7 +2,8 @@
   "name": "swiftie-monorepo",
   "version": "1.0.0",
   "scripts": {
-    "install": "cd cyber-web && npm install",
-    "build": "cd cyber-web && npm run build"
+    "install:web": "cd mobile && npm install",
+    "web": "cd mobile && npm run web",
+    "build:web": "cd mobile && npm run build:web"
   }
 }
