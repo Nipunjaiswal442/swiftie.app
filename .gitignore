@@ -1,3 +1,15 @@
 mobile/dist/
 mobile/node_modules/
 node_modules/
+dist/
+build/
+.env
+.env.local
+.env.production
+*.log
+.DS_Store
+coverage/
+.idea/
+.vscode/
+*.xcodeproj/
+*.xcworkspace/
