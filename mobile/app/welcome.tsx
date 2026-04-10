@@ -14,6 +14,19 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import { makeRedirectUri } from 'expo-auth-session';
+import Animated, {
+  Easing,
+  FadeIn,
+  FadeInDown,
+  FadeInUp,
+  ZoomIn,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { colors } from '../constants/theme';
 import AshokaCiakra from '../components/AshokaCiakra';
 import ParticleField from '../components/ParticleField';
@@ -48,6 +61,8 @@ const SWIFTIE_LETTERS = [
 export default function Welcome() {
   const { login } = useAuthStore();
   const [signingIn, setSigningIn] = useState(false);
+  const glowScale = useSharedValue(1);
+  const ctaGlow = useSharedValue(0.75);
 
   const [, response, promptAsync] = Google.useAuthRequest({
     webClientId: WEB_CLIENT_ID,
@@ -61,10 +76,13 @@ export default function Welcome() {
     try {
       const result = await promptAsync();
       if (result?.type === 'success') {
-        const { id_token } = result.params;
-        if (!id_token) throw new Error('No ID token returned');
-        await signInWithGoogleCredential(id_token);
-        await login(id_token);
+        const params = result.params as Record<string, string | undefined>;
+        const idToken = params.id_token;
+        const accessToken = params.access_token;
+        const firebaseUser = await signInWithGoogleCredential(idToken, accessToken);
+        // Backend expects a Firebase ID token (admin.verifyIdToken), not the Google OAuth JWT
+        const firebaseIdToken = await firebaseUser.getIdToken();
+        await login(firebaseIdToken);
       } else if (result?.type === 'error') {
         Alert.alert('Sign-in failed', result.error?.message || 'Unknown error');
       }
@@ -74,6 +92,33 @@ export default function Welcome() {
       setSigningIn(false);
     }
   };
+
+  React.useEffect(() => {
+    glowScale.value = withRepeat(
+      withSequence(
+        withTiming(1.05, { duration: 1700, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1, { duration: 1700, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      false
+    );
+    ctaGlow.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 1600, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.75, { duration: 1600, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      false
+    );
+  }, [ctaGlow, glowScale]);
+
+  const chakraStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: glowScale.value }],
+  }));
+
+  const ctaGlowStyle = useAnimatedStyle(() => ({
+    opacity: ctaGlow.value,
+  }));
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -88,36 +133,42 @@ export default function Welcome() {
         <ParticleField />
 
         {/* Hero */}
-        <View style={styles.hero}>
+        <Animated.View entering={FadeInDown.duration(450)} style={styles.hero}>
           {/* Nav Bar */}
-          <View style={styles.nav}>
+          <Animated.View entering={FadeInDown.delay(120).duration(450)} style={styles.nav}>
             <Text style={styles.navBrand}>SWIFTIE</Text>
             <Text style={styles.navTagline}>Connect. Chat. Encrypt.</Text>
-          </View>
+          </Animated.View>
 
           {/* Ashoka Chakra */}
-          <View style={styles.chakraContainer}>
+          <Animated.View entering={ZoomIn.delay(180).duration(500)} style={[styles.chakraContainer, chakraStyle]}>
             <AshokaCiakra size={200} />
-          </View>
+          </Animated.View>
 
           {/* Title */}
           <View style={styles.titleRow}>
             {SWIFTIE_LETTERS.map((l, i) => (
-              <Text key={i} style={[styles.titleLetter, { color: l.color }]}>
+              <Animated.Text
+                key={i}
+                entering={FadeInUp.delay(230 + i * 80).duration(380)}
+                style={[styles.titleLetter, { color: l.color }]}
+              >
                 {l.char}
-              </Text>
+              </Animated.Text>
             ))}
           </View>
 
-          <Text style={styles.subtitle}>
+          <Animated.Text entering={FadeIn.delay(420).duration(450)} style={styles.subtitle}>
             India's most secure social media.{'\n'}
             <Text style={{ color: colors.saffron }}>E2E Encrypted.</Text>{' '}
             <Text style={{ color: colors.green }}>Real-time.</Text>{' '}
             <Text style={{ color: colors.cyberBlue }}>Yours.</Text>
-          </Text>
+          </Animated.Text>
 
           {/* CTA */}
-          <Pressable onPress={handleSignIn} disabled={signingIn} style={styles.ctaWrapper}>
+          <Animated.View entering={FadeInUp.delay(520).duration(500)} style={styles.ctaWrapper}>
+            <Animated.View style={[styles.ctaGlow, ctaGlowStyle]} />
+            <Pressable onPress={handleSignIn} disabled={signingIn}>
             <LinearGradient
               colors={[colors.saffron, 'rgba(255,255,255,0.9)', colors.green]}
               start={{ x: 0, y: 0 }}
@@ -130,12 +181,13 @@ export default function Welcome() {
                 <Text style={styles.ctaText}>USE SWIFTIE — Sign in with Google</Text>
               )}
             </LinearGradient>
-          </Pressable>
+            </Pressable>
+          </Animated.View>
 
-          <Text style={styles.heroFootnote}>
+          <Animated.Text entering={FadeIn.delay(650).duration(500)} style={styles.heroFootnote}>
             🔐 Your messages are encrypted before they leave your device
-          </Text>
-        </View>
+          </Animated.Text>
+        </Animated.View>
 
         {/* Divider */}
         <View style={styles.divider} />
@@ -149,7 +201,7 @@ export default function Welcome() {
         <StatsSection />
 
         {/* Final CTA */}
-        <View style={styles.finalCta}>
+        <Animated.View entering={FadeInUp.delay(180).duration(500)} style={styles.finalCta}>
           <Pressable onPress={handleSignIn} disabled={signingIn}>
             <LinearGradient
               colors={[colors.saffron, 'rgba(255,255,255,0.8)', colors.green]}
@@ -164,10 +216,10 @@ export default function Welcome() {
               )}
             </LinearGradient>
           </Pressable>
-        </View>
+        </Animated.View>
 
         {/* Footer */}
-        <View style={styles.footer}>
+        <Animated.View entering={FadeIn.delay(260).duration(500)} style={styles.footer}>
           <TricolourBar />
           <Text style={styles.footerText}>
             SWIFTIE © 2025 · Made with ❤️ in India
@@ -175,7 +227,7 @@ export default function Welcome() {
           <Text style={styles.footerSub}>
             Powered by ECDH P-256 + AES-256-GCM encryption
           </Text>
-        </View>
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -248,8 +300,13 @@ const styles = StyleSheet.create({
   ctaWrapper: {
     width: '100%',
     borderRadius: 12,
-    overflow: 'hidden',
     marginBottom: 16,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  ctaGlow: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,153,51,0.25)',
   },
   ctaGradient: {
     paddingVertical: 16,
