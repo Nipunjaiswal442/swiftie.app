@@ -32,11 +32,21 @@ export const auth = Platform.OS === 'web'
 export const signOut = () => fbSignOut(auth);
 
 /**
- * Sign in with a Google ID token (from expo-auth-session).
- * Returns Firebase user.
+ * Sign in with Google tokens from expo-auth-session.
+ * Pass id_token and/or access_token (web sometimes returns only access_token).
+ * Returns Firebase user — call user.getIdToken() for the backend (not the raw Google JWT).
  */
-export const signInWithGoogleCredential = async (idToken: string) => {
-  const credential = GoogleAuthProvider.credential(idToken);
+export const signInWithGoogleCredential = async (
+  idToken?: string | null,
+  accessToken?: string | null
+) => {
+  if (!idToken && !accessToken) {
+    throw new Error('No Google id_token or access_token from sign-in');
+  }
+  const credential = GoogleAuthProvider.credential(
+    idToken ?? undefined,
+    accessToken ?? undefined
+  );
   const result = await signInWithCredential(auth, credential);
   return result.user;
 };

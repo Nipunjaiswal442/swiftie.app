@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { exchangeFirebaseToken, storage, TOKEN_KEY, USER_KEY } from '../services/api';
 import { signOut as fbSignOut } from '../services/firebase';
-import { initUserKeys, loadKeys } from '../services/encryption';
+import { initUserKeys } from '../services/encryption';
 import { uploadPreKeys } from '../services/api';
 import { router } from 'expo-router';
 
@@ -56,15 +56,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       await storage.set(USER_KEY, JSON.stringify(user));
       set({ user, token, isAuthenticated: true, isLoading: false });
 
-      // Initialize E2E keys for the user
-      try {
-        const publicKeyB64 = await initUserKeys(user._id);
-        await uploadPreKeys({ identityKey: publicKeyB64 });
-      } catch (err) {
-        console.warn('Key init failed (non-critical):', err);
-      }
-
+      // Navigate first so login never appears "stuck" on slow key upload or crypto work
       router.replace('/(tabs)/feed');
+
+      // E2E keys — non-blocking; failures are retriable from chat init
+      void (async () => {
+        try {
+          const publicKeyB64 = await initUserKeys(user._id);
+          await uploadPreKeys({ identityKey: publicKeyB64 });
+        } catch (err) {
+          console.warn('Key init failed (non-critical):', err);
+        }
+      })();
     } catch (err) {
       set({ isLoading: false });
       throw err;
