@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as maya from "../maya.js";
 import type * as messages from "../messages.js";
 import type * as posts from "../posts.js";
 import type * as users from "../users.js";
@@ -19,6 +20,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  maya: typeof maya;
   messages: typeof messages;
   posts: typeof posts;
   users: typeof users;
