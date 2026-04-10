@@ -18,7 +18,18 @@ authRouter.post('/firebase', async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const decoded = await verifyFirebaseToken(idToken);
+    // Verify the Firebase ID token
+    let decoded;
+    try {
+      decoded = await verifyFirebaseToken(idToken);
+    } catch (err) {
+      console.error('Firebase token verification failed:', err);
+      res.status(401).json({ 
+        success: false, 
+        error: 'Invalid Firebase token. Please ensure your Firebase Admin SDK is properly configured.' 
+      });
+      return;
+    }
 
     // Upsert user record
     let user = await User.findOne({ firebaseUid: decoded.uid });
@@ -52,6 +63,7 @@ authRouter.post('/firebase', async (req: Request, res: Response): Promise<void> 
     res.json({ success: true, data: { token, user } });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Authentication failed';
+    console.error('Auth endpoint error:', err);
     res.status(401).json({ success: false, error: message });
   }
 });
