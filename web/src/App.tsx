@@ -16,7 +16,10 @@ import ProtectedRoute from './components/ProtectedRoute'
 import './theme.css'
 import './pages/Landing.css'
 
-const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string)
+// Public deployment URL — safe to hardcode as fallback
+const convex = new ConvexReactClient(
+  import.meta.env.VITE_CONVEX_URL ?? 'https://adamant-quail-564.convex.cloud'
+)
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   return (
