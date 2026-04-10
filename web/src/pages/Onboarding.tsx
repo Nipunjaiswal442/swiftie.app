@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { updateMe } from '../api'
-import { useAuthStore } from '../store/authStore'
+import { useMutation } from 'convex/react'
+import { api } from '../../convex/_generated/api'
 
 export default function Onboarding() {
   const navigate = useNavigate()
-  const { setUser } = useAuthStore()
+  const updateMe = useMutation(api.users.updateMe)
   const [username, setUsername] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [bio, setBio] = useState('')
@@ -19,21 +19,16 @@ export default function Onboarding() {
       return
     }
     if (!/^[a-z0-9_]{3,30}$/.test(username)) {
-      setError('Username must be 3-30 chars: lowercase letters, numbers, underscores only.')
+      setError('Username: 3-30 chars, lowercase letters, numbers, underscores only.')
       return
     }
     setSaving(true)
     setError('')
     try {
-      const { data } = await updateMe({ username: username.toLowerCase(), displayName, bio })
-      setUser(data)
+      await updateMe({ username: username.toLowerCase(), displayName, bio: bio || undefined })
       navigate('/feed', { replace: true })
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : 'Failed to save profile. Username may already be taken.'
-      setError(msg)
+      setError(err instanceof Error ? err.message : 'Failed to save. Username may be taken.')
     } finally {
       setSaving(false)
     }
@@ -70,7 +65,7 @@ export default function Onboarding() {
                 spellCheck={false}
               />
               <p style={{ fontFamily: "'Share Tech Mono'", fontSize: '10px', color: 'var(--text-dim)', marginTop: '6px', letterSpacing: '1px' }}>
-                LOWERCASE, LETTERS, NUMBERS, UNDERSCORES. 3–30 CHARS.
+                LOWERCASE · LETTERS · NUMBERS · UNDERSCORES · 3–30 CHARS
               </p>
             </div>
 

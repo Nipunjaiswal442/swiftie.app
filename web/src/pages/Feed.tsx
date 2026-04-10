@@ -1,78 +1,44 @@
-import { useEffect, useState, useRef } from 'react'
-import { getFeed, createPost, likePost, unlikePost, type Post } from '../api'
-import { useAuthStore } from '../store/authStore'
-import UserAvatar from '../components/UserAvatar'
+import { useRef, useState } from 'react'
+import { useQuery, useMutation } from 'convex/react'
+import { api } from '../../convex/_generated/api'
 import { storage } from '../firebase'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import UserAvatar from '../components/UserAvatar'
+import type { Id } from '../../convex/_generated/dataModel'
 
 export default function Feed() {
-  const { user } = useAuthStore()
-  const [posts, setPosts] = useState<Post[]>([])
-  const [loading, setLoading] = useState(true)
+  const me = useQuery(api.users.getMe)
+  const posts = useQuery(api.posts.getFeed)
+  const createPost = useMutation(api.posts.create)
+  const likePost = useMutation(api.posts.like)
+  const unlikePost = useMutation(api.posts.unlike)
+
   const [caption, setCaption] = useState('')
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [posting, setPosting] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    loadFeed()
-  }, [])
-
-  const loadFeed = async () => {
-    try {
-      const { data } = await getFeed()
-      setPosts(data.posts)
-    } catch {
-      // keep empty
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const handlePost = async () => {
     if (!caption.trim() && !imageFile) return
     setPosting(true)
     try {
-      const fd = new FormData()
-      if (caption.trim()) fd.append('caption', caption)
-      if (imageFile) {
-        const storageRef = ref(storage, `posts/${user!._id}/${Date.now()}_${imageFile.name}`)
+      let imageUrl: string | undefined
+      if (imageFile && me) {
+        const storageRef = ref(storage, `posts/${me._id}/${Date.now()}_${imageFile.name}`)
         const snap = await uploadBytes(storageRef, imageFile)
-        const url = await getDownloadURL(snap.ref)
-        fd.append('imageUrl', url)
+        imageUrl = await getDownloadURL(snap.ref)
       }
-      const { data } = await createPost(fd)
-      setPosts((prev) => [data, ...prev])
+      await createPost({ caption: caption.trim() || undefined, imageUrl })
       setCaption('')
       setImageFile(null)
-    } catch {
-      // silently fail for now
     } finally {
       setPosting(false)
     }
   }
 
-  const handleLike = async (post: Post) => {
-    setPosts((prev) =>
-      prev.map((p) =>
-        p._id === post._id
-          ? { ...p, likedByMe: !p.likedByMe, likesCount: p.likedByMe ? p.likesCount - 1 : p.likesCount + 1 }
-          : p
-      )
-    )
-    try {
-      if (post.likedByMe) await unlikePost(post._id)
-      else await likePost(post._id)
-    } catch {
-      // revert on error
-      setPosts((prev) =>
-        prev.map((p) =>
-          p._id === post._id
-            ? { ...p, likedByMe: post.likedByMe, likesCount: post.likesCount }
-            : p
-        )
-      )
-    }
+  const handleLike = async (postId: Id<'posts'>, liked: boolean) => {
+    if (liked) await unlikePost({ postId })
+    else await likePost({ postId })
   }
 
   return (
@@ -82,7 +48,7 @@ export default function Feed() {
       {/* Create post */}
       <div className="card create-post-card">
         <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
-          <UserAvatar user={user} size={40} />
+          <UserAvatar user={me ?? null} size={40} />
           <div style={{ flex: 1 }}>
             <textarea
               className="create-post-input"
@@ -101,8 +67,6 @@ export default function Feed() {
                     fontFamily: "'Share Tech Mono'", fontSize: '11px',
                     letterSpacing: '1px', cursor: 'pointer', transition: 'all 0.3s'
                   }}
-                  onMouseOver={(e) => (e.currentTarget.style.borderColor = 'rgba(255,153,51,0.5)')}
-                  onMouseOut={(e) => (e.currentTarget.style.borderColor = 'rgba(255,153,51,0.2)')}
                 >
                   📎 {imageFile ? imageFile.name.slice(0, 20) + '...' : 'ATTACH IMAGE'}
                 </button>
@@ -128,7 +92,7 @@ export default function Feed() {
       </div>
 
       {/* Feed */}
-      {loading ? (
+      {posts === undefined ? (
         <div className="loading-screen" style={{ minHeight: '300px' }}>
           <div className="loading-bar" />
         </div>
@@ -144,21 +108,19 @@ export default function Feed() {
               <div className="post-header">
                 <UserAvatar user={post.author} size={44} />
                 <div className="post-author-info">
-                  <div className="post-author-name">{post.author.displayName}</div>
-                  <div className="post-author-username">@{post.author.username}</div>
+                  <div className="post-author-name">{post.author?.displayName}</div>
+                  <div className="post-author-username">@{post.author?.username ?? '...'}</div>
                 </div>
                 <span style={{ fontFamily: "'Share Tech Mono'", fontSize: '10px', color: 'var(--text-dim)' }}>
-                  {new Date(post.createdAt).toLocaleDateString()}
+                  {new Date(post._creationTime).toLocaleDateString()}
                 </span>
               </div>
-              {post.imageUrl && (
-                <img src={post.imageUrl} alt="post" className="post-image" />
-              )}
+              {post.imageUrl && <img src={post.imageUrl} alt="post" className="post-image" />}
               {post.caption && <p className="post-caption">{post.caption}</p>}
               <div className="post-actions">
                 <button
                   className={`post-action-btn${post.likedByMe ? ' liked' : ''}`}
-                  onClick={() => handleLike(post)}
+                  onClick={() => handleLike(post._id, !!post.likedByMe)}
                 >
                   {post.likedByMe ? '🧡' : '🤍'} {post.likesCount} LIKES
                 </button>

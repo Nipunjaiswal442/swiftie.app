@@ -1,55 +1,33 @@
-import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { getUserByUsername, followUser, unfollowUser, getUserPosts, type UserProfile, type Post } from '../api'
-import { useAuthStore } from '../store/authStore'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useQuery, useMutation } from 'convex/react'
+import { api } from '../../convex/_generated/api'
 import UserAvatar from '../components/UserAvatar'
 
 export default function Profile() {
   const { username } = useParams<{ username: string }>()
   const navigate = useNavigate()
-  const { user: me } = useAuthStore()
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [posts, setPosts] = useState<Post[]>([])
-  const [loading, setLoading] = useState(true)
-  const [following, setFollowing] = useState(false)
-  const [toggling, setToggling] = useState(false)
+
+  const me = useQuery(api.users.getMe)
+  const profile = useQuery(api.users.getByUsername, username ? { username } : 'skip')
+  const followUser = useMutation(api.users.follow)
+  const unfollowUser = useMutation(api.users.unfollow)
+  const startConversation = useMutation(api.messages.getOrCreateConversation)
 
   const isMe = me?.username === username
 
-  useEffect(() => {
-    if (!username) return
-    setLoading(true)
-    getUserByUsername(username)
-      .then(({ data }) => {
-        setProfile(data)
-        return getUserPosts(data._id)
-      })
-      .then(({ data }) => setPosts(data))
-      .catch(() => navigate('/feed'))
-      .finally(() => setLoading(false))
-  }, [username, navigate])
-
   const handleFollow = async () => {
     if (!profile) return
-    setToggling(true)
-    try {
-      if (following) {
-        await unfollowUser(profile._id)
-        setFollowing(false)
-        setProfile((p) => p ? { ...p, followersCount: p.followersCount - 1 } : p)
-      } else {
-        await followUser(profile._id)
-        setFollowing(true)
-        setProfile((p) => p ? { ...p, followersCount: p.followersCount + 1 } : p)
-      }
-    } catch {
-      // ignore
-    } finally {
-      setToggling(false)
-    }
+    if (profile.isFollowing) await unfollowUser({ userId: profile._id })
+    else await followUser({ userId: profile._id })
   }
 
-  if (loading) {
+  const handleMessage = async () => {
+    if (!profile) return
+    const convId = await startConversation({ otherUserId: profile._id })
+    navigate(`/chat/${convId}`)
+  }
+
+  if (profile === undefined) {
     return (
       <div className="app-content">
         <div className="loading-screen" style={{ minHeight: '400px' }}>
@@ -59,7 +37,16 @@ export default function Profile() {
     )
   }
 
-  if (!profile) return null
+  if (!profile) {
+    return (
+      <div className="app-content">
+        <div className="empty-state">
+          <div className="empty-state-icon">👤</div>
+          <p className="empty-state-text">USER NOT FOUND</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="app-content">
@@ -99,16 +86,15 @@ export default function Profile() {
           {!isMe && (
             <div style={{ display: 'flex', gap: '12px' }}>
               <button
-                className={`follow-btn ${following ? 'following' : ''}`}
+                className={`follow-btn ${profile.isFollowing ? 'following' : ''}`}
                 onClick={handleFollow}
-                disabled={toggling}
               >
-                {following ? 'FOLLOWING' : 'FOLLOW'}
+                {profile.isFollowing ? 'FOLLOWING' : 'FOLLOW'}
               </button>
               <button
                 className="follow-btn"
                 style={{ borderColor: 'rgba(0,68,204,0.5)', color: 'rgba(0,180,255,0.8)' }}
-                onClick={() => navigate(`/chat`)}
+                onClick={handleMessage}
               >
                 MESSAGE
               </button>
@@ -117,39 +103,16 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Posts grid */}
-      <p className="page-title" style={{ marginTop: '32px' }}>// <span>POSTS</span></p>
-
-      {posts.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-icon">📷</div>
-          <p className="empty-state-text">NO POSTS YET</p>
-        </div>
-      ) : (
-        <div className="posts-grid">
-          {posts.map((post) => (
-            <div key={post._id} className="posts-grid-item">
-              {post.imageUrl ? (
-                <img src={post.imageUrl} alt={post.caption ?? 'post'} />
-              ) : (
-                <div style={{
-                  width: '100%', height: '100%',
-                  background: 'rgba(13,13,26,0.8)',
-                  border: '1px solid rgba(255,153,51,0.1)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '12px',
-                }}>
-                  <p style={{ fontFamily: "'Rajdhani'", fontSize: '13px', color: 'rgba(224,224,255,0.6)', textAlign: 'center', lineHeight: 1.4 }}>
-                    {post.caption?.slice(0, 80)}
-                  </p>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Posts section — derive from profile data */}
+      <p className="page-title" style={{ marginTop: '32px' }}>
+        // <span>POSTS</span>
+      </p>
+      <div className="empty-state" style={{ padding: '40px 20px' }}>
+        <div className="empty-state-icon" style={{ fontSize: '32px' }}>📷</div>
+        <p className="empty-state-text" style={{ fontSize: '11px' }}>
+          {profile.postsCount === 0 ? 'NO POSTS YET' : `${profile.postsCount} POST${profile.postsCount > 1 ? 'S' : ''}`}
+        </p>
+      </div>
     </div>
   )
 }

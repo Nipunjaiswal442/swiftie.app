@@ -1,104 +1,94 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { io, type Socket } from 'socket.io-client'
-import { getMessages, type Message } from '../api'
-import { useAuthStore } from '../store/authStore'
+import { useQuery, useMutation } from 'convex/react'
+import { api } from '../../convex/_generated/api'
+import type { Id } from '../../convex/_generated/dataModel'
+import { useQuery as useConvexQuery } from 'convex/react'
 import UserAvatar from '../components/UserAvatar'
-
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'https://swiftie-backend.onrender.com'
 
 export default function ChatThread() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { user, token } = useAuthStore()
-  const [messages, setMessages] = useState<Message[]>([])
+  const me = useConvexQuery(api.users.getMe)
+  const conversationId = id as Id<'conversations'>
+
+  // Real-time messages via Convex — no Socket.IO needed
+  const messages = useQuery(api.messages.getMessages, id ? { conversationId } : 'skip')
+  const sendMessage = useMutation(api.messages.send)
+  const markRead = useMutation(api.messages.markRead)
+
   const [text, setText] = useState('')
-  const [loading, setLoading] = useState(true)
-  const socketRef = useRef<Socket | null>(null)
+  const [sending, setSending] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    if (!id) return
-    getMessages(id)
-      .then(({ data }) => setMessages(data.messages))
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [id])
-
-  // Socket.IO connection
-  useEffect(() => {
-    if (!token || !id) return
-    const socket = io(SOCKET_URL, { auth: { token } })
-    socketRef.current = socket
-
-    socket.on('message:receive', (msg: Message) => {
-      if (msg.conversationId === id) {
-        setMessages((prev) => [...prev, msg])
-      }
-    })
-
-    return () => { socket.disconnect() }
-  }, [token, id])
-
-  // Auto-scroll
+  // Auto-scroll on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const sendMessage = () => {
-    if (!text.trim() || !socketRef.current) return
-    const socket = socketRef.current
-    // For now send as plaintext over socket (full E2E requires key exchange)
-    socket.emit('message:send', {
-      conversationId: id,
-      ciphertext: text.trim(),
-    })
-    setText('')
+  // Mark messages as read when thread is opened
+  useEffect(() => {
+    if (id) markRead({ conversationId }).catch(() => {})
+  }, [id, markRead, conversationId])
+
+  const handleSend = async () => {
+    if (!text.trim() || !id || sending) return
+    setSending(true)
+    try {
+      await sendMessage({ conversationId, content: text.trim() })
+      setText('')
+    } finally {
+      setSending(false)
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      sendMessage()
+      handleSend()
     }
   }
 
-  const formatTime = (iso: string) =>
-    new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+  const formatTime = (ts: number) =>
+    new Date(ts).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+
+  // Derive the other user from the first message
+  const otherUser = messages?.find(
+    (m) => m.sender?._id !== me?._id
+  )?.sender ?? null
 
   return (
     <div className="app-content" style={{ paddingBottom: 0 }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid rgba(255,153,51,0.1)' }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '16px',
+        marginBottom: '16px', paddingBottom: '16px',
+        borderBottom: '1px solid rgba(255,153,51,0.1)'
+      }}>
         <button
           onClick={() => navigate('/chat')}
           style={{ background: 'none', border: 'none', color: 'var(--saffron)', cursor: 'pointer', fontFamily: "'Share Tech Mono'", fontSize: '13px', letterSpacing: '2px' }}
         >
           ← BACK
         </button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-          {messages[0] && (
-            <>
-              <UserAvatar
-                user={messages[0].sender._id === user?._id ? messages[0].recipient : messages[0].sender}
-                size={36}
-              />
-              <div>
-                <div style={{ fontFamily: "'Orbitron'", fontSize: '13px', letterSpacing: '2px', color: 'var(--neon-white)' }}>
-                  {messages[0].sender._id === user?._id ? messages[0].recipient.displayName : messages[0].sender.displayName}
-                </div>
-                <div style={{ fontFamily: "'Share Tech Mono'", fontSize: '10px', color: 'rgba(0,180,255,0.7)', letterSpacing: '1px' }}>
-                  🔒 E2E ENCRYPTED
-                </div>
+        {otherUser && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+            <UserAvatar user={otherUser} size={36} />
+            <div>
+              <div style={{ fontFamily: "'Orbitron'", fontSize: '13px', letterSpacing: '2px', color: 'var(--neon-white)' }}>
+                {otherUser.displayName}
               </div>
-            </>
-          )}
-        </div>
+              <div style={{ fontFamily: "'Share Tech Mono'", fontSize: '10px', color: 'rgba(0,180,255,0.7)', letterSpacing: '1px' }}>
+                🔒 E2E ENCRYPTED
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="chat-thread">
         <div className="chat-messages">
-          {loading ? (
+          {messages === undefined ? (
             <div className="loading-screen" style={{ minHeight: '200px' }}>
               <div className="loading-bar" />
             </div>
@@ -109,11 +99,11 @@ export default function ChatThread() {
             </div>
           ) : (
             messages.map((msg) => {
-              const isSent = msg.sender._id === user?._id
+              const isSent = msg.sender?._id === me?._id
               return (
                 <div key={msg._id} className={`chat-bubble ${isSent ? 'sent' : 'received'}`}>
-                  <div className="bubble-text">{msg.ciphertext}</div>
-                  <div className="bubble-time">{formatTime(msg.createdAt)}</div>
+                  <div className="bubble-text">{msg.content}</div>
+                  <div className="bubble-time">{formatTime(msg._creationTime)}</div>
                 </div>
               )
             })
@@ -132,8 +122,8 @@ export default function ChatThread() {
           />
           <button
             className="send-btn"
-            onClick={sendMessage}
-            disabled={!text.trim()}
+            onClick={handleSend}
+            disabled={!text.trim() || sending}
           >
             SEND
           </button>

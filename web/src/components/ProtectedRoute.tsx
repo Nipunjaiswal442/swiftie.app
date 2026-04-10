@@ -1,14 +1,14 @@
 import { Navigate } from 'react-router-dom'
-import { useAuthStore } from '../store/authStore'
+import { useConvexAuth } from 'convex/react'
 
 interface Props {
   children: React.ReactNode
 }
 
 export default function ProtectedRoute({ children }: Props) {
-  const { token, loading } = useAuthStore()
+  const { isLoading, isAuthenticated } = useConvexAuth()
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="loading-screen">
         <div className="loading-logo">SWIFTIE</div>
@@ -17,7 +17,7 @@ export default function ProtectedRoute({ children }: Props) {
     )
   }
 
-  if (!token) {
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />
   }
 

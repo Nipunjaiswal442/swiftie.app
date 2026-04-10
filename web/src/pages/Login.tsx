@@ -2,19 +2,18 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signInWithPopup } from 'firebase/auth'
 import { auth, googleProvider } from '../firebase'
-import { exchangeFirebaseToken } from '../api'
-import { useAuthStore } from '../store/authStore'
+import { useConvexAuth } from 'convex/react'
 
 export default function Login() {
   const navigate = useNavigate()
-  const { setToken, setUser, user } = useAuthStore()
+  const { isAuthenticated } = useConvexAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const particlesRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (user) navigate('/feed', { replace: true })
-  }, [user, navigate])
+    if (isAuthenticated) navigate('/feed', { replace: true })
+  }, [isAuthenticated, navigate])
 
   useEffect(() => {
     const container = particlesRef.current
@@ -39,22 +38,13 @@ export default function Login() {
     setLoading(true)
     setError('')
     try {
-      const result = await signInWithPopup(auth, googleProvider)
-      const idToken = await result.user.getIdToken()
-      const { data } = await exchangeFirebaseToken(idToken)
-      setToken(data.token)
-      setUser(data.user)
-
-      // Check if user needs onboarding
-      if (!data.user.username) {
-        navigate('/onboarding', { replace: true })
-      } else {
-        navigate('/feed', { replace: true })
-      }
+      // Firebase signs in — Convex picks up the token automatically via ConvexProviderWithAuth
+      await signInWithPopup(auth, googleProvider)
+      // After sign-in, ConvexProviderWithAuth gets the Firebase token and authenticates Convex
+      // The user will be redirected once isAuthenticated becomes true (useEffect above)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Sign-in failed. Please try again.'
       setError(msg)
-    } finally {
       setLoading(false)
     }
   }
@@ -87,11 +77,9 @@ export default function Login() {
             disabled={loading}
           >
             {loading ? (
-              <>
-                <span style={{ fontFamily: "'Share Tech Mono'", fontSize: '12px', letterSpacing: '2px' }}>
-                  AUTHENTICATING...
-                </span>
-              </>
+              <span style={{ fontFamily: "'Share Tech Mono'", fontSize: '12px', letterSpacing: '2px' }}>
+                AUTHENTICATING...
+              </span>
             ) : (
               <>
                 <svg width="20" height="20" viewBox="0 0 24 24">

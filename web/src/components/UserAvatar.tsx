@@ -1,7 +1,11 @@
-import type { UserProfile } from '../api'
+interface UserLike {
+  displayName?: string
+  username?: string
+  profilePhotoUrl?: string
+}
 
 interface Props {
-  user: UserProfile | null | undefined
+  user: UserLike | null | undefined
   size?: number
 }
 
@@ -10,7 +14,7 @@ export default function UserAvatar({ user, size = 40 }: Props) {
     return (
       <img
         src={user.profilePhotoUrl}
-        alt={user.displayName}
+        alt={user.displayName ?? 'user'}
         className="user-avatar"
         style={{ width: size, height: size }}
       />
