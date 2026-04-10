@@ -1,17 +1,11 @@
-# Root
+```
+# Environment
+.env.local
+.env.*
+
+# Dependencies
 node_modules/
 
-# Web app
-web/.env
-web/node_modules/
-web/dist/
-
-# Server
-server/.env
-server/node_modules/
-server/dist/
-firebase-service-account.json
-
-# Legacy (removed but just in case)
-mobile/dist/
-mobile/node_modules/
+# Editors
+.vscode/
+```

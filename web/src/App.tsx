@@ -9,6 +9,7 @@ import Feed from './pages/Feed'
 import Chat from './pages/Chat'
 import ChatThread from './pages/ChatThread'
 import Profile from './pages/Profile'
+import MayaChat from './pages/MayaChat'
 
 import Nav from './components/Nav'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -53,6 +54,9 @@ function Router() {
         } />
         <Route path="/chat/:id" element={
           <ProtectedRoute><AppLayout><ChatThread /></AppLayout></ProtectedRoute>
+        } />
+        <Route path="/maya" element={
+          <ProtectedRoute><AppLayout><MayaChat /></AppLayout></ProtectedRoute>
         } />
         <Route path="/profile/:username" element={
           <ProtectedRoute><AppLayout><Profile /></AppLayout></ProtectedRoute>
