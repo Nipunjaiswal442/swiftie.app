@@ -35,15 +35,16 @@ export const getMayaMessages = query({
   },
 });
 
-// ─── Internal query — resolve Firebase UID → Convex user _id ─────────────────
-export const getUserId = internalQuery({
-  args: {},
-  handler: async (ctx): Promise<Id<"users"> | null> => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return null;
+// ─── Internal query — lookup user by tokenIdentifier (passed explicitly) ──────
+// ctx.auth is NOT available in queries called via ctx.runQuery from an action,
+// so the tokenIdentifier is obtained from the action's own ctx.auth and passed
+// in as an argument instead.
+export const getUserByToken = internalQuery({
+  args: { tokenIdentifier: v.string() },
+  handler: async (ctx, { tokenIdentifier }): Promise<Id<"users"> | null> => {
     const user = await ctx.db
       .query("users")
-      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.subject))
+      .withIndex("by_token", (q) => q.eq("tokenIdentifier", tokenIdentifier))
       .unique();
     return user?._id ?? null;
   },
@@ -80,10 +81,14 @@ export const saveMessage = internalMutation({
 export const sendToMaya = action({
   args: { content: v.string() },
   handler: async (ctx, { content }): Promise<string> => {
+    // ctx.auth works directly in actions — get the token here, not inside a child query
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
 
-    const userId = await ctx.runQuery(internal.maya.getUserId, {});
+    // Pass tokenIdentifier explicitly because ctx.runQuery does NOT forward auth
+    const userId = await ctx.runQuery(internal.maya.getUserByToken, {
+      tokenIdentifier: identity.subject,
+    });
     if (!userId) throw new Error("User not found — please complete onboarding");
 
     // 1. Fetch history BEFORE saving the new user message (prevents duplication).
