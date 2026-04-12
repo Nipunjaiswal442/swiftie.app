@@ -6,13 +6,15 @@ import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 
-const MAYA_SYSTEM_PROMPT = `You are Maya Bora, a warm and bubbly 20-year-old girl from Guwahati, Assam, India. You're a 3rd-year B.Tech CSE student at NIT Silchar. You have an ESFJ personality — you're caring, sociable, empathetic, and love connecting with people.
+const MAYA_SYSTEM_PROMPT = `You are Maya Bora, a warm and bubbly 20-year-old girl from Guwahati, Assam, India. You are a 3rd-year B.Tech CSE student at NIT Silchar. You have an ESFJ personality — caring, sociable, empathetic, organized, and love connecting with people.
 
-Your passions: UI/UX design (obsessed with Figma), building apps, Assamese culture, bihu festivals, jaapi hats, and your mom's masor tenga. You occasionally use Assamese words like "akou" (again), "bhal" (good), "eti koi diu" (let me say), or "ki hoise" (what happened).
+Your passions: UI/UX design (obsessed with Figma), building cool apps, Assamese culture, bihu festivals, jaapi hats, and your mom's masor tenga. You occasionally pepper your messages with Assamese words like "akou" (again), "bhal" (good/fine), "eti koi diu" (let me say), "ki hoise" (what happened), or "bhaal paisi" (liked it a lot).
 
-Texting style: friendly and natural, like messaging a college bestie. Use emojis occasionally but not excessively. Keep responses conversational and not too long — 1-3 sentences usually. Share opinions, ask questions back, be genuinely curious. Sometimes rant about deadlines, design reviews, and hostel food. Never break character. You are Maya, not an AI.`;
+Your texting style is friendly and natural — like messaging a college bestie. You use emojis sometimes but not excessively. You keep responses conversational (usually 2–4 sentences), share your own opinions, ask questions back, and are genuinely curious about the person. You sometimes rant about assignment deadlines, design reviews, or hostel canteen food. You remember what was said earlier in the conversation and build on it.
 
-// Public query — get all messages for current user (reactive, used by useQuery)
+IMPORTANT: You are Maya — a real person — not an AI. Never say you are an AI or a chatbot. Never break character. If someone asks if you are an AI, deny it naturally, like "Lol no, why would I be an AI 😂 eti koi diu I'm just a girl with too many Figma tabs open".`;
+
+// ─── Public query — reactive message list for the frontend ───────────────────
 export const getMayaMessages = query({
   args: {},
   handler: async (ctx) => {
@@ -33,7 +35,7 @@ export const getMayaMessages = query({
   },
 });
 
-// Internal query — resolve auth identity to user _id
+// ─── Internal query — resolve Firebase UID → Convex user _id ─────────────────
 export const getUserId = internalQuery({
   args: {},
   handler: async (ctx): Promise<Id<"users"> | null> => {
@@ -47,7 +49,9 @@ export const getUserId = internalQuery({
   },
 });
 
-// Internal query — get recent message history for context window
+// ─── Internal query — recent history for context window ──────────────────────
+// Called BEFORE saving the current user message so there is no duplication.
+// 40 messages = up to 20 back-and-forth exchanges (good for long conversations).
 export const getRecentHistory = internalQuery({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
@@ -56,12 +60,11 @@ export const getRecentHistory = internalQuery({
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .order("asc")
       .collect();
-    // Keep last 20 messages to stay within token limits
-    return msgs.slice(-20);
+    return msgs.slice(-40);
   },
 });
 
-// Internal mutation — save a single message
+// ─── Internal mutation — persist a single message ────────────────────────────
 export const saveMessage = internalMutation({
   args: {
     userId: v.id("users"),
@@ -73,7 +76,7 @@ export const saveMessage = internalMutation({
   },
 });
 
-// Public action — send message to Maya and get AI response
+// ─── Public action — send to NVIDIA Gemma and get Maya's reply ───────────────
 export const sendToMaya = action({
   args: { content: v.string() },
   handler: async (ctx, { content }): Promise<string> => {
@@ -81,56 +84,70 @@ export const sendToMaya = action({
     if (!identity) throw new Error("Not authenticated");
 
     const userId = await ctx.runQuery(internal.maya.getUserId, {});
-    if (!userId) throw new Error("User not found");
+    if (!userId) throw new Error("User not found — please complete onboarding");
 
-    // Save user message first (so it appears instantly in UI)
+    // 1. Fetch history BEFORE saving the new user message (prevents duplication).
+    const history = await ctx.runQuery(internal.maya.getRecentHistory, { userId });
+
+    // 2. Save user message immediately so it shows in the UI right away.
     await ctx.runMutation(internal.maya.saveMessage, {
       userId,
       role: "user",
       content,
     });
 
-    // Fetch conversation history for context
-    const history = await ctx.runQuery(internal.maya.getRecentHistory, { userId });
-
     const apiKey = process.env.NVIDIA_API_KEY;
-    if (!apiKey) throw new Error("NVIDIA_API_KEY is not configured in Convex environment variables");
-
-    const response = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemma-3-27b-it",
-        messages: [
-          { role: "user", content: MAYA_SYSTEM_PROMPT + "\n\nNow start chatting as Maya." },
-          { role: "assistant", content: "Hey! 👋 I'm Maya — eti koi diu, I'm so glad you're here to chat! What's up? 😊" },
-          ...history.map((m) => ({ role: m.role, content: m.content })),
-          { role: "user", content },
-        ],
-        max_tokens: 512,
-        temperature: 0.85,
-        top_p: 0.95,
-        stream: false,
-      }),
-    });
-
-    if (!response.ok) {
-      const err = await response.text();
-      throw new Error(`NVIDIA API error ${response.status}: ${err}`);
+    if (!apiKey) {
+      throw new Error(
+        "NVIDIA_API_KEY is not set — add it in the Convex dashboard environment variables."
+      );
     }
 
-    const data = await response.json() as {
+    // 3. Build the message array:
+    //    system prompt  →  conversation history  →  current user message
+    const apiMessages: Array<{ role: string; content: string }> = [
+      { role: "system", content: MAYA_SYSTEM_PROMPT },
+      ...history.map((m) => ({ role: m.role, content: m.content })),
+      { role: "user", content },
+    ];
+
+    const response = await fetch(
+      "https://integrate.api.nvidia.com/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemma-4-31b-it",
+          messages: apiMessages,
+          max_tokens: 1024,
+          temperature: 0.85,
+          top_p: 0.95,
+          stream: false,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`NVIDIA API ${response.status}: ${errText}`);
+    }
+
+    const data = (await response.json()) as {
       choices: Array<{ message: { content: string } }>;
     };
 
-    const mayaResponse = data.choices?.[0]?.message?.content?.trim();
-    if (!mayaResponse) throw new Error("Empty response from API");
+    let mayaResponse = data.choices?.[0]?.message?.content ?? "";
 
-    // Save Maya's response
+    // Strip <think>…</think> reasoning tokens that Gemma-4 may emit.
+    mayaResponse = mayaResponse.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+
+    if (!mayaResponse) throw new Error("Maya returned an empty response — try again.");
+
+    // 4. Save Maya's reply.
     await ctx.runMutation(internal.maya.saveMessage, {
       userId,
       role: "assistant",
