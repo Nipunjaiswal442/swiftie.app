@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom'
 export default function Landing() {
   const particlesRef = useRef<HTMLDivElement>(null)
   const gridRef = useRef<HTMLDivElement>(null)
-  const navRef = useRef<HTMLElement>(null)
   const navigate = useNavigate()
 
   // Spawn particles
@@ -16,13 +15,14 @@ export default function Landing() {
       const p = document.createElement('div')
       p.className = 'particle'
       p.style.left = Math.random() * 100 + '%'
-      p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)]
+      const color = colors[Math.floor(Math.random() * colors.length)]
+      p.style.backgroundColor = color
       p.style.animationDuration = (8 + Math.random() * 12) + 's'
       p.style.animationDelay = Math.random() * 15 + 's'
       const size = (1 + Math.random() * 2) + 'px'
       p.style.width = size
       p.style.height = size
-      p.style.boxShadow = `0 0 ${4 + Math.random() * 6}px ${p.style.backgroundColor}`
+      p.style.boxShadow = `0 0 ${4 + Math.random() * 6}px ${color}`
       container.appendChild(p)
     }
     return () => { container.innerHTML = '' }
@@ -39,18 +39,6 @@ export default function Landing() {
     }
     document.addEventListener('mousemove', handler)
     return () => document.removeEventListener('mousemove', handler)
-  }, [])
-
-  // Navbar glass on scroll
-  useEffect(() => {
-    const nav = navRef.current
-    if (!nav) return
-    const handler = () => {
-      if (window.scrollY > 50) nav.classList.add('scrolled')
-      else nav.classList.remove('scrolled')
-    }
-    window.addEventListener('scroll', handler)
-    return () => window.removeEventListener('scroll', handler)
   }, [])
 
   // Scroll-triggered animations
@@ -72,6 +60,10 @@ export default function Landing() {
     return () => observer.disconnect()
   }, [])
 
+  const scrollTo = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+  }
+
   return (
     <>
       {/* Background layers */}
@@ -88,13 +80,14 @@ export default function Landing() {
       </div>
 
       {/* Navigation */}
-      <nav className="main-nav" ref={navRef}>
+      <nav className="main-nav">
         <div className="nav-logo">SWIFTIE</div>
         <ul className="nav-links">
-          <li><a href="#features">Features</a></li>
-          <li><a href="#tech">Stack</a></li>
-          <li><a href="#security">Security</a></li>
-          <li><a href="#launch">Launch</a></li>
+          <li><a href="#pillars" onClick={(e) => { e.preventDefault(); scrollTo('pillars') }}>The Three Sections</a></li>
+          <li><a href="#how" onClick={(e) => { e.preventDefault(); scrollTo('how') }}>How It Works</a></li>
+          <li><a href="#tech" onClick={(e) => { e.preventDefault(); scrollTo('tech') }}>Stack</a></li>
+          <li><a href="#principles" onClick={(e) => { e.preventDefault(); scrollTo('principles') }}>Principles</a></li>
+          <li><a href="#launch" onClick={(e) => { e.preventDefault(); scrollTo('launch') }}>Launch</a></li>
         </ul>
       </nav>
 
@@ -114,32 +107,40 @@ export default function Landing() {
               <line x1="133" y1="28" x2="113" y2="87" /><line x1="87" y1="113" x2="67" y2="172" />
               <line x1="28" y1="67" x2="87" y2="87" /><line x1="113" y1="113" x2="172" y2="133" />
               <line x1="172" y1="67" x2="113" y2="87" /><line x1="87" y1="113" x2="28" y2="133" />
-              <line x1="48" y1="28" x2="88" y2="88" /><line x1="112" y1="112" x2="152" y2="172" />
-              <line x1="152" y1="28" x2="112" y2="88" /><line x1="88" y1="112" x2="48" y2="172" />
-              <line x1="28" y1="48" x2="88" y2="88" /><line x1="112" y1="112" x2="172" y2="152" />
-              <line x1="172" y1="48" x2="112" y2="88" /><line x1="88" y1="112" x2="28" y2="152" />
             </g>
           </svg>
         </div>
 
         <h1 className="hero-title glitch-text" data-text="SWIFTIE">
-          <span className="letter-s">S</span>
-          <span className="letter-w">W</span>
-          <span className="letter-i">I</span>
-          <span className="letter-f">F</span>
-          <span className="letter-t">T</span>
-          <span className="letter-i2">I</span>
-          <span className="letter-e">E</span>
+          <span className="l1">S</span>
+          <span className="l2">W</span>
+          <span className="l3">I</span>
+          <span className="l4">F</span>
+          <span className="l5">T</span>
+          <span className="l6">I</span>
+          <span className="l7">E</span>
         </h1>
-        <p className="hero-tagline">Connect &middot; Chat &middot; Encrypt</p>
+
+        <p className="hero-tagline">Personality &middot; Ideology &middot; Occupation</p>
+
+        <h2 className="hero-headline">
+          <span className="hs">FIND</span> <span className="hw">YOUR</span> <span className="hg">TRIBE</span>
+        </h2>
+
         <p className="hero-sub">
-          India&apos;s next-gen social platform with military-grade end-to-end encryption.
-          Your conversations, your data, your sovereignty.
+          India&apos;s first community discovery platform powered by personality science.
+          Take three short assessments. Get matched to communities of people who think like you,
+          believe like you, and create like you.
         </p>
 
-        <button className="cta-btn" onClick={() => navigate('/login')}>
-          USE SWIFTIE <span className="cta-arrow">➔</span>
-        </button>
+        <div className="cta-row">
+          <button className="cta-btn" onClick={() => navigate('/login')}>
+            USE SWIFTIE <span className="cta-arrow">&#10140;</span>
+          </button>
+          <button className="cta-btn cta-btn-secondary" onClick={() => scrollTo('how')}>
+            HOW IT WORKS
+          </button>
+        </div>
 
         <div className="scroll-indicator">
           <span>Scroll</span>
@@ -149,28 +150,93 @@ export default function Landing() {
 
       <div className="section-divider" />
 
-      {/* Features Section */}
-      <section id="features" className="content-section">
-        <p className="section-label anim">// 001 — FEATURES</p>
-        <h2 className="section-title anim">BUILT FOR THE NEXT BILLION</h2>
+      {/* Three Sections / Pillars */}
+      <section id="pillars" className="content-section">
+        <p className="section-label anim">// 001 — THE THREE SECTIONS</p>
+        <h2 className="section-title anim">THREE LENSES. ONE YOU.</h2>
         <p className="section-desc anim">
-          A social experience engineered from the ground up — profiles, feeds,
-          encrypted chat, and media sharing in one seamless platform.
+          Every Swiftie user is profiled along three independent dimensions. Each section has its own
+          assessment, its own communities, and its own conversation. Engage with one, two, or all three.
         </p>
 
-        <div className="features-grid">
+        <div className="pillars-grid">
+          <div className="pillar-card pillar-personality anim">
+            <div className="pillar-number">SECTION_01</div>
+            <span className="pillar-icon">🧠</span>
+            <h3 className="pillar-title">PERSONALITY</h3>
+            <p className="pillar-subtitle">Who you are</p>
+            <p className="pillar-text">
+              Take a 30-question personality assessment based on MBTI or the scientifically-validated
+              Big Five (OCEAN) model. Get matched to communities of people who share your cognitive style.
+            </p>
+            <div className="pillar-tags">
+              <span className="pillar-tag">MBTI</span>
+              <span className="pillar-tag">Big Five</span>
+              <span className="pillar-tag">16 Types</span>
+              <span className="pillar-tag">OCEAN</span>
+            </div>
+          </div>
+
+          <div className="pillar-card pillar-ideology anim">
+            <div className="pillar-number">SECTION_02</div>
+            <span className="pillar-icon">⚐</span>
+            <h3 className="pillar-title">IDEOLOGY</h3>
+            <p className="pillar-subtitle">What you believe</p>
+            <p className="pillar-text">
+              30 questions across political, social, and economic axes. Find communities for thoughtful
+              discourse, plus weekly digests from neighbouring perspectives so you never get stuck in
+              an echo chamber.
+            </p>
+            <div className="pillar-tags">
+              <span className="pillar-tag">Political</span>
+              <span className="pillar-tag">Social</span>
+              <span className="pillar-tag">Economic</span>
+              <span className="pillar-tag">Moderated</span>
+            </div>
+          </div>
+
+          <div className="pillar-card pillar-occupation anim">
+            <div className="pillar-number">SECTION_03</div>
+            <span className="pillar-icon">🔧</span>
+            <h3 className="pillar-title">OCCUPATION</h3>
+            <p className="pillar-subtitle">What you do</p>
+            <p className="pillar-text">
+              30 questions across technical, artistic, humanities, and commerce branches. Connect with
+              peers in your craft, from backend engineers to indie game devs, illustrators to founders.
+            </p>
+            <div className="pillar-tags">
+              <span className="pillar-tag">Tech</span>
+              <span className="pillar-tag">Art</span>
+              <span className="pillar-tag">Humanities</span>
+              <span className="pillar-tag">Commerce</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="section-divider" />
+
+      {/* How It Works */}
+      <section id="how" className="content-section">
+        <p className="section-label anim">// 002 — HOW IT WORKS</p>
+        <h2 className="section-title anim">FROM SIGN-UP TO COMMUNITY</h2>
+        <p className="section-desc anim">
+          No 90-question gauntlet at signup. We split assessments across the first week so you never
+          feel overwhelmed.
+        </p>
+
+        <div className="flow-container">
           {[
-            { icon: '🔒', title: 'E2E ENCRYPTED CHAT', text: 'Signal Protocol powered messaging. X3DH key exchange with Double Ratchet algorithm. Your messages are unreadable — even to us.' },
-            { icon: '👤', title: 'RICH PROFILES', text: 'Custom usernames, bios, profile photos, cover images. Follow system with real-time follower counts and activity feeds.' },
-            { icon: '📸', title: 'PHOTO SHARING', text: 'Share moments with smart compression. 100MB storage per user. Like, comment, and engage with your community\'s content.' },
-            { icon: '⚡', title: 'REAL-TIME ENGINE', text: 'WebSocket-powered instant delivery. Typing indicators, read receipts, online status. Zero lag, always connected.' },
-            { icon: '🇮🇳', title: 'MADE IN INDIA', text: 'Designed for the Indian digital ecosystem. Privacy-first approach aligned with India\'s data sovereignty vision.' },
-            { icon: '📱', title: 'CROSS-PLATFORM', text: 'Single codebase, dual deployment. React Native delivers native performance on both iOS and Android simultaneously.' },
-          ].map((f) => (
-            <div key={f.title} className="feature-card anim">
-              <span className="feature-icon">{f.icon}</span>
-              <h3 className="feature-title">{f.title}</h3>
-              <p className="feature-text">{f.text}</p>
+            { num: '01', icon: '🔒', title: 'SIGN IN', text: 'One-tap Google Sign-In via Firebase. Set username, photo, and choose your sections.' },
+            { num: '02', icon: '📝', title: 'ASSESS', text: "Take one section's 30-question assessment now. The other two are offered later." },
+            { num: '03', icon: '🎯', title: 'MATCH', text: 'Our engine recommends 3–5 communities ranked by your unique profile signature.' },
+            { num: '04', icon: '🤝', title: 'JOIN', text: 'Join up to 3 communities per section. Post, discuss, react, and find your people.' },
+          ].map((step) => (
+            <div key={step.num} className="flow-step anim">
+              <div className="flow-num">{step.num}</div>
+              <span className="flow-icon">{step.icon}</span>
+              <h4 className="flow-title">{step.title}</h4>
+              <p className="flow-text">{step.text}</p>
             </div>
           ))}
         </div>
@@ -178,24 +244,24 @@ export default function Landing() {
 
       <div className="section-divider" />
 
-      {/* Tech Stack Section */}
+      {/* Tech Stack */}
       <section id="tech" className="content-section">
-        <p className="section-label anim">// 002 — ARCHITECTURE</p>
-        <h2 className="section-title anim">THE TECHNOLOGY STACK</h2>
-        <p className="section-desc anim">Battle-tested technologies assembled into a modern, scalable architecture.</p>
+        <p className="section-label anim">// 003 — ARCHITECTURE</p>
+        <h2 className="section-title anim">THE TECH STACK</h2>
+        <p className="section-desc anim">
+          Modern, real-time, and built for scale. One React codebase serves the web platform.
+        </p>
 
         <div className="tech-grid">
           {[
             { emoji: '⚛', name: 'REACT', desc: 'WEB FRONTEND' },
-            { emoji: '🔷', name: 'TYPESCRIPT', desc: 'TYPE-SAFE CODE' },
-            { emoji: '🏠', name: 'NODE.JS', desc: 'SERVER RUNTIME' },
-            { emoji: '🚀', name: 'EXPRESS.JS', desc: 'API FRAMEWORK' },
-            { emoji: '🍃', name: 'MONGODB', desc: 'NOSQL DATABASE' },
-            { emoji: '🔥', name: 'FIREBASE', desc: 'AUTH + STORAGE' },
-            { emoji: '🔌', name: 'SOCKET.IO', desc: 'REAL-TIME LAYER' },
-            { emoji: '🔐', name: 'SIGNAL PROTOCOL', desc: 'E2E ENCRYPTION' },
-            { emoji: '☁️', name: 'RENDER', desc: 'CLOUD DEPLOY' },
-            { emoji: '🎯', name: 'JWT', desc: 'AUTH TOKENS' },
+            { emoji: '🔷', name: 'TYPESCRIPT', desc: 'TYPE-SAFE' },
+            { emoji: '⚡', name: 'CONVEX', desc: 'REACTIVE BACKEND' },
+            { emoji: '🔥', name: 'FIREBASE AUTH', desc: 'GOOGLE SIGN-IN' },
+            { emoji: '▲', name: 'VERCEL', desc: 'EDGE DEPLOY' },
+            { emoji: '🧠', name: 'OCEAN ENGINE', desc: 'MATCH ALGORITHM' },
+            { emoji: '🔐', name: 'AES-256', desc: 'ENCRYPTED AT REST' },
+            { emoji: '🇮🇳', name: 'DPDP READY', desc: 'COMPLIANT BY DESIGN' },
           ].map((t) => (
             <div key={t.name} className="tech-item anim">
               <span className="tech-emoji">{t.emoji}</span>
@@ -208,47 +274,26 @@ export default function Landing() {
 
       <div className="section-divider" />
 
-      {/* Security Section */}
-      <section id="security" className="content-section">
-        <p className="section-label anim">// 003 — SECURITY</p>
-        <h2 className="section-title anim">ENCRYPTION PROTOCOL</h2>
+      {/* Principles */}
+      <section id="principles" className="content-section">
+        <p className="section-label anim">// 004 — OUR PRINCIPLES</p>
+        <h2 className="section-title anim">DESIGNED RESPONSIBLY</h2>
         <p className="section-desc anim">
-          Military-grade Signal Protocol ensures zero-knowledge messaging.
-          Not even Swiftie&apos;s servers can read your conversations.
+          Personality, ideology, and occupational data are sensitive. We treat them that way —
+          encrypted, consent-driven, and never sold.
         </p>
 
-        <div className="encrypt-visual">
-          <div className="encrypt-node sender">
-            👤 SENDER<br />
-            <small style={{ fontFamily: "'Share Tech Mono'", fontSize: '10px', color: 'var(--text-dim)' }}>
-              encrypts locally
-            </small>
-          </div>
-          <div className="encrypt-arrow">⟶</div>
-          <div className="encrypt-node protocol">
-            🔒 SIGNAL PROTOCOL<br />
-            <small style={{ fontFamily: "'Share Tech Mono'", fontSize: '10px', color: 'var(--text-dim)' }}>
-              X3DH + Double Ratchet
-            </small>
-          </div>
-          <div className="encrypt-arrow">⟶</div>
-          <div className="encrypt-node receiver">
-            👤 RECEIVER<br />
-            <small style={{ fontFamily: "'Share Tech Mono'", fontSize: '10px', color: 'var(--text-dim)' }}>
-              decrypts locally
-            </small>
-          </div>
-        </div>
-
-        <div className="encrypt-details">
+        <div className="principles-grid">
           {[
-            { title: 'FORWARD SECRECY', text: 'Each message uses unique keys. Compromising one key reveals nothing about past or future messages.' },
-            { title: 'ZERO KNOWLEDGE', text: 'Server stores only ciphertext. No plaintext ever touches our infrastructure. Your words, your eyes only.' },
-            { title: 'AES-256 ENCRYPTION', text: 'The same standard used by intelligence agencies worldwide. Mathematically infeasible to break.' },
-          ].map((d) => (
-            <div key={d.title} className="encrypt-detail-card">
-              <h4>{d.title}</h4>
-              <p>{d.text}</p>
+            { icon: '🔒', title: 'CONSENT FIRST', text: 'Every assessment requires explicit consent. You can withdraw anytime and we purge your data within 30 days.' },
+            { icon: '💬', title: 'NO ECHO CHAMBERS', text: 'Ideology communities include a weekly "Other Perspectives" digest. Reflection, not radicalisation.' },
+            { icon: '🛡️', title: 'HUMAN MODERATION', text: 'Every community has trained moderators. Hate speech and personal attacks get removed within 24 hours.' },
+            { icon: '🇮🇳', title: 'DPDP COMPLIANT', text: "Built for India's Digital Personal Data Protection Act 2023. Data lives in India. Export anytime." },
+          ].map((p) => (
+            <div key={p.title} className="principle-card anim">
+              <span className="principle-icon">{p.icon}</span>
+              <h3 className="principle-title">{p.title}</h3>
+              <p className="principle-text">{p.text}</p>
             </div>
           ))}
         </div>
@@ -260,16 +305,13 @@ export default function Landing() {
       <section className="content-section" style={{ paddingTop: 0, paddingBottom: 0 }}>
         <div className="stats-row">
           {[
-            { num: '256', unit: '-BIT', label: 'ENCRYPTION' },
-            { num: '100', unit: 'MB', label: 'PER USER STORAGE' },
-            { num: '<50', unit: 'ms', label: 'MESSAGE LATENCY' },
-            { num: '2', unit: '', label: 'PLATFORMS' },
+            { num: '3', label: 'DISCOVERY SECTIONS' },
+            { num: '90', label: 'TOTAL QUESTIONS' },
+            { num: '100+', label: 'SEED COMMUNITIES' },
+            { num: '2', label: 'PLATFORMS' },
           ].map((s) => (
             <div key={s.label} className="stat-item anim">
-              <div className="stat-number">
-                {s.num}
-                {s.unit && <small style={{ fontSize: '0.6em' }}>{s.unit}</small>}
-              </div>
+              <div className="stat-number">{s.num}</div>
               <div className="stat-label">{s.label}</div>
             </div>
           ))}
@@ -281,14 +323,14 @@ export default function Landing() {
       {/* Final CTA */}
       <section className="final-cta" id="launch">
         <div className="final-cta-glow" />
-        <p className="section-label anim" style={{ textAlign: 'center' }}>// READY TO JOIN?</p>
+        <p className="section-label anim" style={{ textAlign: 'center' }}>// READY TO BEGIN?</p>
         <h2 className="final-title">
-          <span className="highlight-saffron">YOUR</span> PLATFORM.{' '}
-          <span className="highlight-green">YOUR</span> PRIVACY.
+          <span className="highlight-saffron">DISCOVER</span> YOURSELF.{' '}
+          <span className="highlight-green">DISCOVER</span> YOUR PEOPLE.
         </h2>
-        <p className="final-sub">Be among the first to experience India&apos;s privacy-first social network.</p>
+        <p className="final-sub">Join India&apos;s first personality-driven community platform.</p>
         <button className="cta-btn-large" onClick={() => navigate('/login')}>
-          USE SWIFTIE <span className="cta-arrow" style={{ fontSize: '22px' }}>➔</span>
+          USE SWIFTIE <span className="cta-arrow" style={{ fontSize: '22px' }}>&#10140;</span>
         </button>
       </section>
 
@@ -297,15 +339,16 @@ export default function Landing() {
         <div className="footer-tricolour">
           <div className="s" /><div className="w" /><div className="g" />
         </div>
-        <p className="footer-text">SWIFTIE &copy; 2026 &mdash; ALL RIGHTS RESERVED</p>
+        <p className="footer-text">SWIFTIE &copy; 2026 &mdash; PERSONALITY-DRIVEN COMMUNITIES</p>
         <div className="footer-links">
           <a href="#">PRIVACY POLICY</a>
           <a href="#">TERMS OF SERVICE</a>
+          <a href="#">DPDP COMPLIANCE</a>
           <a href="https://github.com/Nipunjaiswal442/swiftie.app" target="_blank" rel="noreferrer">GITHUB</a>
           <a href="#">CONTACT</a>
         </div>
         <p className="made-in-india">
-          🇮🇳 Designed &amp; Engineered in India
+          🇮🇳 Designed &amp; Engineered in India by Nipun Jaiswal
         </p>
       </footer>
     </>

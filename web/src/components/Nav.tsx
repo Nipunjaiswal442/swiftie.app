@@ -46,6 +46,7 @@ export default function Nav() {
             <>
               <li><Link to="/feed" style={isActive('/feed')}>FEED</Link></li>
               <li><Link to="/chat" style={isActive('/chat')}>MESSAGES</Link></li>
+              <li><Link to="/discover" style={isActive('/discover')}>DISCOVER</Link></li>
               <li><Link to="/maya" style={isActive('/maya')}>MAYA ✦</Link></li>
               {me?.username && (
                 <li>

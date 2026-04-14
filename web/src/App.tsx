@@ -10,6 +10,9 @@ import Chat from './pages/Chat'
 import ChatThread from './pages/ChatThread'
 import Profile from './pages/Profile'
 import MayaChat from './pages/MayaChat'
+import Discover from './pages/Discover'
+import AssessPersonality from './pages/AssessPersonality'
+import CommunityPage from './pages/CommunityPage'
 
 import Nav from './components/Nav'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -60,6 +63,15 @@ function Router() {
         } />
         <Route path="/maya" element={
           <ProtectedRoute><AppLayout><MayaChat /></AppLayout></ProtectedRoute>
+        } />
+        <Route path="/discover" element={
+          <ProtectedRoute><AppLayout><Discover /></AppLayout></ProtectedRoute>
+        } />
+        <Route path="/assess/personality" element={
+          <ProtectedRoute><AppLayout><AssessPersonality /></AppLayout></ProtectedRoute>
+        } />
+        <Route path="/community/:slug" element={
+          <ProtectedRoute><AppLayout><CommunityPage /></AppLayout></ProtectedRoute>
         } />
 
         <Route path="*" element={<Navigate to="/" replace />} />
