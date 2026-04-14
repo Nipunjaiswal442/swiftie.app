@@ -9,6 +9,7 @@ export default function Login() {
   const { isAuthenticated } = useConvexAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [termsAccepted, setTermsAccepted] = useState(false)
   const particlesRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -71,10 +72,31 @@ export default function Login() {
             🔒 End-to-end encrypted
           </div>
 
+          <style>{`
+            .terms-row { margin: 20px 0 4px; text-align: left; }
+            .terms-label { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+            .terms-checkbox { margin-top: 3px; flex-shrink: 0; width: 16px; height: 16px; accent-color: var(--saffron); cursor: pointer; }
+            .terms-text { font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 0.5px; color: var(--text-dim); line-height: 1.7; }
+          `}</style>
+
+          <div className="terms-row">
+            <label className="terms-label">
+              <input
+                type="checkbox"
+                className="terms-checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+              />
+              <span className="terms-text">
+                By ticking this box, you confirm you are at least 13 years old and agree to Swiftie's Terms of Service and Privacy Policy. We collect responses from your personality, ideology, and occupation assessments solely to match you with relevant communities. This data is never sold or shared with third parties. We process your information in accordance with India's Digital Personal Data Protection Act, 2023 (DPDP Act). You may delete your data at any time from your profile settings.
+              </span>
+            </label>
+          </div>
+
           <button
             className="google-btn"
             onClick={handleGoogleSignIn}
-            disabled={loading}
+            disabled={!termsAccepted || loading}
           >
             {loading ? (
               <span style={{ fontFamily: "'Share Tech Mono'", fontSize: '12px', letterSpacing: '2px' }}>
