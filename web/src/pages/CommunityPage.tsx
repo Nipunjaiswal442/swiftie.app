@@ -19,6 +19,7 @@ export default function CommunityPage() {
   const leaveMutation = useMutation(api.communities.leave)
   const createPost = useMutation(api.communityPosts.create)
   const likePost = useMutation(api.communityPosts.like)
+  const unlikePost = useMutation(api.communityPosts.unlike)
 
   const [postContent, setPostContent] = useState('')
   const [posting, setPosting] = useState(false)
@@ -264,6 +265,7 @@ export default function CommunityPage() {
           gap: 6px;
         }
         .post-like-btn:hover { border-color: rgba(255,153,51,0.4); color: var(--saffron); }
+        .post-like-btn.liked { color: var(--saffron); border-color: rgba(255,153,51,0.3); }
 
         /* Composer */
         .composer-section { margin-top: 32px; }
@@ -438,10 +440,13 @@ export default function CommunityPage() {
                     <p className="post-content">{post.content}</p>
                     <div className="post-actions">
                       <button
-                        className="post-like-btn"
-                        onClick={() => likePost({ postId: post._id })}
+                        className={`post-like-btn${post.isLikedByMe ? ' liked' : ''}`}
+                        onClick={() => post.isLikedByMe
+                          ? unlikePost({ postId: post._id })
+                          : likePost({ postId: post._id })
+                        }
                       >
-                        ♥ {post.likesCount}
+                        {post.isLikedByMe ? '♥' : '♡'} {post.likesCount}
                       </button>
                     </div>
                   </div>
