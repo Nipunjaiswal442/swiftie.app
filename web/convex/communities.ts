@@ -30,10 +30,14 @@ const IDEOLOGY_COMMUNITIES = [
 ];
 
 const OCCUPATION_COMMUNITIES = [
-  { slug: "builders-den", name: "Builders' Den", matchKey: "tech", icon: "💻", description: "Engineers, developers, and hackers. Ship code, debug life, and talk about what you're building." },
-  { slug: "creative-studio", name: "Creative Studio", matchKey: "art", icon: "🎨", description: "Designers, illustrators, musicians, and filmmakers. Share work, get feedback, and find collaborators." },
-  { slug: "humanities-forum", name: "Humanities Forum", matchKey: "humanities", icon: "📚", description: "Writers, philosophers, historians, and social scientists. Ideas, texts, and big questions." },
-  { slug: "commerce-corner", name: "Commerce Corner", matchKey: "commerce", icon: "📈", description: "Founders, marketers, finance folks, and operators. Build, grow, and scale." },
+  { slug: "builders-den",     name: "Builders' Den",      matchKey: "tech",       icon: "💻", description: "Engineers, developers, and hackers. Ship code, debug life, and talk about what you're building." },
+  { slug: "creative-studio",  name: "Creative Studio",    matchKey: "art",        icon: "🎨", description: "Musicians, filmmakers, and visual artists. Share work, get feedback, and find collaborators." },
+  { slug: "humanities-forum", name: "Humanities Forum",   matchKey: "humanities", icon: "📚", description: "Philosophers, historians, and social scientists. Ideas, texts, and big questions." },
+  { slug: "commerce-corner",  name: "Commerce Corner",    matchKey: "commerce",   icon: "📈", description: "Founders, marketers, finance folks, and operators. Build, grow, and scale." },
+  { slug: "design-lab",       name: "Design Lab",         matchKey: "design",     icon: "✏️", description: "UI/UX designers, visual artists, and product thinkers. Share mockups, critique interfaces, and talk about the craft of making things beautiful and usable." },
+  { slug: "science-research", name: "Science & Research", matchKey: "science",    icon: "🔭", description: "Researchers, data scientists, and curious minds. Discuss experiments, papers, methodology, and the joy of figuring out how things actually work." },
+  { slug: "writers-room",     name: "Writers' Room",      matchKey: "writing",    icon: "📝", description: "Journalists, novelists, essayists, and content creators. Share work in progress, discuss craft, and find readers for your ideas." },
+  { slug: "health-wellness",  name: "Health & Wellness",  matchKey: "health",     icon: "🩺", description: "Medicine, psychology, fitness, and nutrition enthusiasts. Talk about the science of feeling good and the humans who dedicate their lives to it." },
 ];
 
 // ─── Seed communities (run once if empty) ────────────────────────────────────
@@ -261,5 +265,32 @@ export const getMyCommunitiesBySection = query({
     }
 
     return result;
+  },
+});
+
+// ─── Migration — add communities that are missing from the live DB ─────────────
+// Run once via: npx convex run communities:addMissingCommunities
+// Safe to run multiple times — only inserts slugs that don't exist yet.
+export const addMissingCommunities = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const all = [
+      ...PERSONALITY_COMMUNITIES.map((c) => ({ ...c, section: "personality" as const, memberCount: 0 })),
+      ...IDEOLOGY_COMMUNITIES.map((c) => ({ ...c, section: "ideology" as const, memberCount: 0 })),
+      ...OCCUPATION_COMMUNITIES.map((c) => ({ ...c, section: "occupation" as const, memberCount: 0 })),
+    ];
+
+    let inserted = 0;
+    for (const community of all) {
+      const existing = await ctx.db
+        .query("communities")
+        .withIndex("by_slug", (q) => q.eq("slug", community.slug))
+        .unique();
+      if (!existing) {
+        await ctx.db.insert("communities", community);
+        inserted++;
+      }
+    }
+    return { inserted };
   },
 });

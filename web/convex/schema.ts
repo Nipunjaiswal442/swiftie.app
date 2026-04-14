@@ -65,16 +65,7 @@ export default defineSchema({
       v.literal("ideology"),
       v.literal("occupation")
     ),
-    scores: v.object({
-      E: v.optional(v.number()),
-      I: v.optional(v.number()),
-      S: v.optional(v.number()),
-      N: v.optional(v.number()),
-      T: v.optional(v.number()),
-      F: v.optional(v.number()),
-      J: v.optional(v.number()),
-      P: v.optional(v.number()),
-    }),
+    scores: v.record(v.string(), v.number()),
     matchKey: v.string(), // e.g. "INTJ", "progressive", "tech"
     completedAt: v.number(),
   })

@@ -12,6 +12,8 @@ import Profile from './pages/Profile'
 import MayaChat from './pages/MayaChat'
 import Discover from './pages/Discover'
 import AssessPersonality from './pages/AssessPersonality'
+import AssessIdeology from './pages/AssessIdeology'
+import AssessOccupation from './pages/AssessOccupation'
 import CommunityPage from './pages/CommunityPage'
 
 import Nav from './components/Nav'
@@ -69,6 +71,12 @@ function Router() {
         } />
         <Route path="/assess/personality" element={
           <ProtectedRoute><AppLayout><AssessPersonality /></AppLayout></ProtectedRoute>
+        } />
+        <Route path="/assess/ideology" element={
+          <ProtectedRoute><AppLayout><AssessIdeology /></AppLayout></ProtectedRoute>
+        } />
+        <Route path="/assess/occupation" element={
+          <ProtectedRoute><AppLayout><AssessOccupation /></AppLayout></ProtectedRoute>
         } />
         <Route path="/community/:slug" element={
           <ProtectedRoute><AppLayout><CommunityPage /></AppLayout></ProtectedRoute>

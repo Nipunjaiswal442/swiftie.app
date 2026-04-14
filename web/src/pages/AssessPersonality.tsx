@@ -6,7 +6,7 @@ import { PERSONALITY_QUESTIONS, scorePersonality } from '../data/questions'
 
 export default function AssessPersonality() {
   const navigate = useNavigate()
-  const saveResult = useMutation(api.assessments.saveResult)
+  const completeAssessment = useMutation(api.assessments.completeAssessment)
 
   const [answers, setAnswers] = useState<Record<number, number>>({})
   const [submitting, setSubmitting] = useState(false)
@@ -30,17 +30,11 @@ export default function AssessPersonality() {
     setError(null)
     try {
       const { scores, matchKey } = scorePersonality(answers)
-      await saveResult({
+      await completeAssessment({
         section: 'personality',
         scores: {
-          E: scores.E,
-          I: scores.I,
-          S: scores.S,
-          N: scores.N,
-          T: scores.T,
-          F: scores.F,
-          J: scores.J,
-          P: scores.P,
+          E: scores.E, I: scores.I, S: scores.S, N: scores.N,
+          T: scores.T, F: scores.F, J: scores.J, P: scores.P,
         },
         matchKey,
       })
