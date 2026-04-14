@@ -8,6 +8,9 @@
  * @module
  */
 
+import type * as assessments from "../assessments.js";
+import type * as communities from "../communities.js";
+import type * as communityPosts from "../communityPosts.js";
 import type * as maya from "../maya.js";
 import type * as messages from "../messages.js";
 import type * as posts from "../posts.js";
@@ -20,6 +23,9 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  assessments: typeof assessments;
+  communities: typeof communities;
+  communityPosts: typeof communityPosts;
   maya: typeof maya;
   messages: typeof messages;
   posts: typeof posts;

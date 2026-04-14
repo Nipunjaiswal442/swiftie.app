@@ -4,7 +4,6 @@ declare const process: { env: Record<string, string | undefined> };
 import { action, internalMutation, internalQuery, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
-import type { Id } from "./_generated/dataModel";
 
 const MAYA_SYSTEM_PROMPT = `You are Maya Bora, a warm and bubbly 20-year-old girl from Guwahati, Assam, India. You are a 3rd-year B.Tech CSE student at NIT Silchar. You have an ESFJ personality — caring, sociable, empathetic, organized, and love connecting with people.
 
@@ -35,24 +34,40 @@ export const getMayaMessages = query({
   },
 });
 
-// ─── Internal query — lookup user by tokenIdentifier (passed explicitly) ──────
-// ctx.auth is NOT available in queries called via ctx.runQuery from an action,
-// so the tokenIdentifier is obtained from the action's own ctx.auth and passed
-// in as an argument instead.
-export const getUserByToken = internalQuery({
-  args: { tokenIdentifier: v.string() },
-  handler: async (ctx, { tokenIdentifier }): Promise<Id<"users"> | null> => {
-    const user = await ctx.db
+// ─── Internal mutation — get-or-create user by tokenIdentifier ───────────────
+// Called via ctx.runMutation from the action (not ctx.runQuery) because:
+// 1. ctx.runMutation works correctly from Convex actions
+// 2. Creates the user if they don't exist yet (handles any edge case)
+// 3. tokenIdentifier is passed explicitly — no auth-forwarding dependency
+export const ensureUser = internalMutation({
+  args: {
+    tokenIdentifier: v.string(),
+    email: v.optional(v.string()),
+    displayName: v.optional(v.string()),
+  },
+  handler: async (ctx, { tokenIdentifier, email, displayName }) => {
+    const existing = await ctx.db
       .query("users")
       .withIndex("by_token", (q) => q.eq("tokenIdentifier", tokenIdentifier))
       .unique();
-    return user?._id ?? null;
+
+    if (existing) return existing._id;
+
+    // User not yet in Convex — create a minimal record so Maya can work
+    // (matches the same fields as api.users.getOrCreate)
+    return ctx.db.insert("users", {
+      tokenIdentifier,
+      email: email ?? "",
+      displayName: displayName ?? email?.split("@")[0] ?? "User",
+      isOnline: true,
+      lastSeen: Date.now(),
+    });
   },
 });
 
 // ─── Internal query — recent history for context window ──────────────────────
-// Called BEFORE saving the current user message so there is no duplication.
-// 40 messages = up to 20 back-and-forth exchanges (good for long conversations).
+// Called BEFORE saving the current user message (no duplication in API payload).
+// 40 messages = 20 full back-and-forth exchanges for long conversations.
 export const getRecentHistory = internalQuery({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
@@ -65,7 +80,7 @@ export const getRecentHistory = internalQuery({
   },
 });
 
-// ─── Internal mutation — persist a single message ────────────────────────────
+// ─── Internal mutation — persist one message ─────────────────────────────────
 export const saveMessage = internalMutation({
   args: {
     userId: v.id("users"),
@@ -77,24 +92,26 @@ export const saveMessage = internalMutation({
   },
 });
 
-// ─── Public action — send to NVIDIA Gemma and get Maya's reply ───────────────
+// ─── Public action — send message and get Maya's AI reply ────────────────────
 export const sendToMaya = action({
   args: { content: v.string() },
   handler: async (ctx, { content }): Promise<string> => {
-    // ctx.auth works directly in actions — get the token here, not inside a child query
+    // ctx.auth works in actions — extract identity here, not in child functions
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
 
-    // Pass tokenIdentifier explicitly because ctx.runQuery does NOT forward auth
-    const userId = await ctx.runQuery(internal.maya.getUserByToken, {
+    // ensureUser: get existing user OR create one — guaranteed non-null result
+    // Uses runMutation (not runQuery) — the correct call type from an action
+    const userId = await ctx.runMutation(internal.maya.ensureUser, {
       tokenIdentifier: identity.subject,
+      email: identity.email,
+      displayName: identity.name,
     });
-    if (!userId) throw new Error("User not found — please complete onboarding");
 
-    // 1. Fetch history BEFORE saving the new user message (prevents duplication).
+    // 1. Fetch history BEFORE saving the new message (prevents duplication)
     const history = await ctx.runQuery(internal.maya.getRecentHistory, { userId });
 
-    // 2. Save user message immediately so it shows in the UI right away.
+    // 2. Save user message immediately — appears in UI right away via useQuery
     await ctx.runMutation(internal.maya.saveMessage, {
       userId,
       role: "user",
@@ -108,8 +125,7 @@ export const sendToMaya = action({
       );
     }
 
-    // 3. Build the message array:
-    //    system prompt  →  conversation history  →  current user message
+    // 3. Build message array: system prompt → history → current user message
     const apiMessages: Array<{ role: string; content: string }> = [
       { role: "system", content: MAYA_SYSTEM_PROMPT },
       ...history.map((m) => ({ role: m.role, content: m.content })),
@@ -147,12 +163,12 @@ export const sendToMaya = action({
 
     let mayaResponse = data.choices?.[0]?.message?.content ?? "";
 
-    // Strip <think>…</think> reasoning tokens that Gemma-4 may emit.
+    // Strip <think>…</think> reasoning tokens that Gemma-4 may emit
     mayaResponse = mayaResponse.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
 
     if (!mayaResponse) throw new Error("Maya returned an empty response — try again.");
 
-    // 4. Save Maya's reply.
+    // 4. Save Maya's reply
     await ctx.runMutation(internal.maya.saveMessage, {
       userId,
       role: "assistant",

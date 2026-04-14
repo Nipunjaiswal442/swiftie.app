@@ -57,4 +57,63 @@ export default defineSchema({
     role: v.union(v.literal("user"), v.literal("assistant")),
     content: v.string(),
   }).index("by_user", ["userId"]),
+
+  assessmentResults: defineTable({
+    userId: v.id("users"),
+    section: v.union(
+      v.literal("personality"),
+      v.literal("ideology"),
+      v.literal("occupation")
+    ),
+    scores: v.object({
+      E: v.optional(v.number()),
+      I: v.optional(v.number()),
+      S: v.optional(v.number()),
+      N: v.optional(v.number()),
+      T: v.optional(v.number()),
+      F: v.optional(v.number()),
+      J: v.optional(v.number()),
+      P: v.optional(v.number()),
+    }),
+    matchKey: v.string(), // e.g. "INTJ", "progressive", "tech"
+    completedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_section", ["userId", "section"]),
+
+  communities: defineTable({
+    slug: v.string(),
+    name: v.string(),
+    section: v.union(
+      v.literal("personality"),
+      v.literal("ideology"),
+      v.literal("occupation")
+    ),
+    matchKey: v.string(),
+    description: v.string(),
+    memberCount: v.number(),
+    icon: v.string(),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_section", ["section"])
+    .index("by_match_key", ["matchKey"]),
+
+  communityMembers: defineTable({
+    communityId: v.id("communities"),
+    userId: v.id("users"),
+    joinedAt: v.number(),
+  })
+    .index("by_community", ["communityId"])
+    .index("by_user", ["userId"])
+    .index("by_community_and_user", ["communityId", "userId"]),
+
+  communityPosts: defineTable({
+    communityId: v.id("communities"),
+    authorId: v.id("users"),
+    content: v.string(),
+    likesCount: v.number(),
+    commentsCount: v.number(),
+  })
+    .index("by_community", ["communityId"])
+    .index("by_author", ["authorId"]),
 });
