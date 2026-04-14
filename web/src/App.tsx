@@ -14,6 +14,7 @@ import Discover from './pages/Discover'
 import AssessPersonality from './pages/AssessPersonality'
 import AssessIdeology from './pages/AssessIdeology'
 import AssessOccupation from './pages/AssessOccupation'
+import CommunityChatThread from './pages/CommunityChatThread'
 import CommunityPage from './pages/CommunityPage'
 
 import Nav from './components/Nav'
@@ -59,6 +60,9 @@ function Router() {
         } />
         <Route path="/chat/:id" element={
           <ProtectedRoute><AppLayout><ChatThread /></AppLayout></ProtectedRoute>
+        } />
+        <Route path="/chat/community/:slug" element={
+          <ProtectedRoute><AppLayout><CommunityChatThread /></AppLayout></ProtectedRoute>
         } />
         <Route path="/profile/:username" element={
           <ProtectedRoute><AppLayout><Profile /></AppLayout></ProtectedRoute>

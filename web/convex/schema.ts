@@ -107,4 +107,17 @@ export default defineSchema({
   })
     .index("by_community", ["communityId"])
     .index("by_author", ["authorId"]),
+
+  communityPostLikes: defineTable({
+    postId: v.id("communityPosts"),
+    userId: v.id("users"),
+  })
+    .index("by_post", ["postId"])
+    .index("by_post_and_user", ["postId", "userId"]),
+
+  communityMessages: defineTable({
+    communityId: v.id("communities"),
+    senderId: v.id("users"),
+    content: v.string(),
+  }).index("by_community", ["communityId"]),
 });

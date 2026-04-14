@@ -10,6 +10,7 @@
 
 import type * as assessments from "../assessments.js";
 import type * as communities from "../communities.js";
+import type * as communityMessages from "../communityMessages.js";
 import type * as communityPosts from "../communityPosts.js";
 import type * as maya from "../maya.js";
 import type * as messages from "../messages.js";
@@ -25,6 +26,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   assessments: typeof assessments;
   communities: typeof communities;
+  communityMessages: typeof communityMessages;
   communityPosts: typeof communityPosts;
   maya: typeof maya;
   messages: typeof messages;
