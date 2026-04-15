@@ -48,11 +48,17 @@ export const getMe = query({
 // Update current user profile
 export const updateMe = mutation({
   args: {
-    username: v.optional(v.string()),
-    displayName: v.optional(v.string()),
-    bio: v.optional(v.string()),
+    username:        v.optional(v.string()),
+    displayName:     v.optional(v.string()),
+    bio:             v.optional(v.string()),
     profilePhotoUrl: v.optional(v.string()),
-    coverPhotoUrl: v.optional(v.string()),
+    coverPhotoUrl:   v.optional(v.string()),
+    // Richer profile fields
+    age:         v.optional(v.number()),
+    location:    v.optional(v.string()),
+    pronouns:    v.optional(v.string()),
+    currentRole: v.optional(v.string()),
+    interests:   v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -65,6 +71,11 @@ export const updateMe = mutation({
       )
       .unique();
     if (!me) throw new Error("User not found");
+
+    // Validate age
+    if (args.age !== undefined && args.age < 13) {
+      throw new Error("You must be at least 13 years old to use this platform");
+    }
 
     // Check username uniqueness if changing
     if (args.username && args.username !== me.username) {
@@ -81,6 +92,11 @@ export const updateMe = mutation({
       ...(args.bio !== undefined && { bio: args.bio }),
       ...(args.profilePhotoUrl !== undefined && { profilePhotoUrl: args.profilePhotoUrl }),
       ...(args.coverPhotoUrl !== undefined && { coverPhotoUrl: args.coverPhotoUrl }),
+      ...(args.age !== undefined && { age: args.age }),
+      ...(args.location !== undefined && { location: args.location }),
+      ...(args.pronouns !== undefined && { pronouns: args.pronouns }),
+      ...(args.currentRole !== undefined && { currentRole: args.currentRole }),
+      ...(args.interests !== undefined && { interests: args.interests }),
     });
     return ctx.db.get(me._id);
   },

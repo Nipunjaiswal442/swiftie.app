@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from 'convex/react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { api } from '../../convex/_generated/api'
 import type { Id } from '../../convex/_generated/dataModel'
 
@@ -376,6 +376,20 @@ export default function Discover() {
           .discover-columns { grid-template-columns: 1fr; }
         }
       `}</style>
+
+      {/* Explore nudge */}
+      <div style={{ textAlign: 'right', marginBottom: '20px' }}>
+        <Link to="/explore" style={{
+          fontFamily: "'Share Tech Mono', monospace",
+          fontSize: '11px',
+          letterSpacing: '2px',
+          color: 'var(--neon-green)',
+          textDecoration: 'none',
+          transition: 'opacity 0.2s',
+        }}>
+          Want to explore other communities? → EXPLORE
+        </Link>
+      </div>
 
       <div className="discover-header">
         <p className="discover-page-label">// DISCOVER</p>

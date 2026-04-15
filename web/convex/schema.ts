@@ -12,6 +12,16 @@ export default defineSchema({
     coverPhotoUrl: v.optional(v.string()),
     isOnline: v.optional(v.boolean()),
     lastSeen: v.optional(v.number()),
+    // Richer profile fields
+    age:               v.optional(v.number()),
+    location:          v.optional(v.string()),
+    pronouns:          v.optional(v.string()),
+    currentRole:       v.optional(v.string()),
+    interests:         v.optional(v.array(v.string())),
+    // Denormalised assessment result caches (updated by completeAssessment)
+    personalityResult: v.optional(v.string()), // e.g. "ENFP"
+    ideologyResult:    v.optional(v.string()), // e.g. "progressive"
+    occupationResult:  v.optional(v.string()), // e.g. "tech"
   })
     .index("by_token", ["tokenIdentifier"])
     .index("by_username", ["username"])
@@ -120,4 +130,22 @@ export default defineSchema({
     senderId: v.id("users"),
     content: v.string(),
   }).index("by_community", ["communityId"]),
+
+  communityApplications: defineTable({
+    userId:      v.id("users"),
+    communityId: v.id("communities"),
+    answers: v.object({
+      whyJoin:        v.string(),   // textarea, 50-500 chars
+      currentFit:     v.string(),   // empty string if no current match in section
+      identification: v.string(),   // "Identify strongly" | "Exploring out of curiosity" | "Disagree but want to engage"
+      duration:       v.string(),   // "<6 months" | "6mo-2yrs" | "2+ years" | "All my life"
+      willRetake:     v.boolean(),  // true = willing to retake
+    }),
+    status:    v.union(v.literal("pending"), v.literal("auto-approved"), v.literal("rejected")),
+    appliedAt: v.number(),
+    decidedAt: v.optional(v.number()),
+  })
+    .index("by_user",               ["userId"])
+    .index("by_user_and_community", ["userId", "communityId"])
+    .index("by_status",             ["status"]),
 });

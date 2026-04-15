@@ -43,6 +43,13 @@ export const completeAssessment = mutation({
       completedAt: Date.now(),
     });
 
+    // 1b. Cache matchKey on user doc for fast profile/chat rendering
+    const resultField =
+      section === 'personality' ? 'personalityResult' :
+      section === 'ideology'    ? 'ideologyResult'    :
+                                  'occupationResult';
+    await ctx.db.patch(user._id, { [resultField]: matchKey });
+
     // 2. Find the matching community for this section + matchKey
     // Note: matchKeys are globally unique across sections (MBTI codes never
     // collide with ideology or occupation keys), so we can safely filter by section

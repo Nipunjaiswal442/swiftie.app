@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
+import UserAvatar from '../components/UserAvatar'
 
 export default function CommunityChatThread() {
   const { slug } = useParams<{ slug: string }>()
@@ -16,6 +17,10 @@ export default function CommunityChatThread() {
     api.communityMessages.getMessages,
     community?._id ? { communityId: community._id } : 'skip'
   )
+  const members = useQuery(
+    api.communities.getMembers,
+    community?._id ? { communityId: community._id } : 'skip'
+  )
 
   // Get current user's identity for own-message detection
   const me = useQuery(api.users.getMe)
@@ -24,11 +29,25 @@ export default function CommunityChatThread() {
 
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
+  const [showMembers, setShowMembers] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages?.length])
+
+  // Close members panel on outside click
+  useEffect(() => {
+    if (!showMembers) return
+    const handler = (e: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+        setShowMembers(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showMembers])
 
   const handleSend = async () => {
     if (!input.trim() || !community?._id) return
@@ -89,6 +108,7 @@ export default function CommunityChatThread() {
           flex-direction: column;
           height: calc(100vh - 120px);
           padding: 0 24px;
+          position: relative;
         }
         .cc-header {
           display: flex;
@@ -129,6 +149,11 @@ export default function CommunityChatThread() {
           color: var(--text-dim);
           margin-top: 3px;
         }
+        .cc-header-actions {
+          display: flex;
+          gap: 8px;
+          flex-shrink: 0;
+        }
         .cc-view-link {
           font-family: 'Share Tech Mono', monospace;
           font-size: 9px;
@@ -139,9 +164,21 @@ export default function CommunityChatThread() {
           border: 1px solid rgba(255,255,255,0.1);
           transition: all 0.2s;
           white-space: nowrap;
-          flex-shrink: 0;
         }
         .cc-view-link:hover { color: var(--saffron); border-color: rgba(255,153,51,0.3); }
+        .cc-members-btn {
+          font-family: 'Share Tech Mono', monospace;
+          font-size: 9px;
+          letter-spacing: 2px;
+          color: var(--text-dim);
+          background: transparent;
+          padding: 5px 10px;
+          border: 1px solid rgba(255,255,255,0.1);
+          cursor: pointer;
+          transition: all 0.2s;
+          white-space: nowrap;
+        }
+        .cc-members-btn:hover { color: var(--saffron); border-color: rgba(255,153,51,0.3); }
         .cc-messages-area {
           flex: 1;
           overflow-y: auto;
@@ -287,9 +324,88 @@ export default function CommunityChatThread() {
           color: var(--text-dim);
           margin-top: 6px;
         }
+
+        /* Members panel */
+        .cc-members-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 100;
+          pointer-events: none;
+        }
+        .cc-members-panel {
+          position: fixed;
+          top: 0;
+          right: 0;
+          width: 280px;
+          height: 100vh;
+          background: rgba(8,8,20,0.97);
+          border-left: 1px solid rgba(255,255,255,0.08);
+          display: flex;
+          flex-direction: column;
+          z-index: 101;
+          pointer-events: all;
+          backdrop-filter: blur(12px);
+        }
+        .cc-members-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 18px 20px 14px;
+          border-bottom: 1px solid rgba(255,255,255,0.06);
+          font-family: 'Orbitron', sans-serif;
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 3px;
+          color: var(--neon-white);
+          flex-shrink: 0;
+        }
+        .cc-members-close {
+          background: transparent;
+          border: none;
+          color: var(--text-dim);
+          cursor: pointer;
+          font-size: 16px;
+          line-height: 1;
+          transition: color 0.2s;
+          padding: 0;
+        }
+        .cc-members-close:hover { color: var(--saffron); }
+        .cc-members-list {
+          flex: 1;
+          overflow-y: auto;
+          padding: 12px 0;
+        }
+        .cc-members-list::-webkit-scrollbar { width: 3px; }
+        .cc-members-list::-webkit-scrollbar-track { background: transparent; }
+        .cc-members-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); }
+        .cc-member-row {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 10px 20px;
+          text-decoration: none;
+          transition: background 0.15s;
+        }
+        .cc-member-row:hover { background: rgba(255,153,51,0.05); }
+        .cc-member-name {
+          font-family: 'Rajdhani', sans-serif;
+          font-size: 14px;
+          color: var(--neon-white);
+          line-height: 1.2;
+        }
+        .cc-member-handle {
+          font-family: 'Share Tech Mono', monospace;
+          font-size: 9px;
+          letter-spacing: 1px;
+          color: var(--text-dim);
+        }
+
         @media (max-width: 600px) {
           .community-chat-page { padding: 0 12px; }
           .cc-bubble-wrap { max-width: 82%; }
+          .cc-members-panel { width: 100%; border-left: none; }
+          .cc-header-actions { gap: 6px; }
+          .cc-view-link, .cc-members-btn { display: none; }
         }
       `}</style>
 
@@ -301,7 +417,12 @@ export default function CommunityChatThread() {
           <div className="cc-header-name" style={{ color: sectionColor }}>{community.name}</div>
           <div className="cc-header-meta">{community.memberCount} member{community.memberCount !== 1 ? 's' : ''}</div>
         </div>
-        <Link to={`/community/${community.slug}`} className="cc-view-link">VIEW COMMUNITY ↗</Link>
+        <div className="cc-header-actions">
+          <button className="cc-members-btn" onClick={() => setShowMembers(true)}>
+            MEMBERS ({community.memberCount})
+          </button>
+          <Link to={`/community/${community.slug}`} className="cc-view-link">VIEW ↗</Link>
+        </div>
       </div>
 
       {/* Messages area */}
@@ -383,6 +504,44 @@ export default function CommunityChatThread() {
           </>
         )}
       </div>
+
+      {/* Members panel overlay */}
+      {showMembers && (
+        <div className="cc-members-overlay">
+          <div className="cc-members-panel" ref={panelRef}>
+            <div className="cc-members-header">
+              <span>MEMBERS</span>
+              <button className="cc-members-close" onClick={() => setShowMembers(false)}>✕</button>
+            </div>
+            <div className="cc-members-list">
+              {members === undefined ? (
+                <div style={{ padding: '20px', textAlign: 'center', fontFamily: "'Share Tech Mono'", fontSize: '10px', color: 'var(--text-dim)', letterSpacing: '2px' }}>
+                  LOADING...
+                </div>
+              ) : members.length === 0 ? (
+                <div style={{ padding: '20px', textAlign: 'center', fontFamily: "'Share Tech Mono'", fontSize: '10px', color: 'var(--text-dim)', letterSpacing: '2px' }}>
+                  NO MEMBERS YET
+                </div>
+              ) : (
+                (members as any[]).map((m: any) => (
+                  <Link
+                    key={m._id}
+                    to={m.username ? `/profile/${m.username}` : '#'}
+                    className="cc-member-row"
+                    onClick={() => setShowMembers(false)}
+                  >
+                    <UserAvatar user={m} size={32} />
+                    <div>
+                      <div className="cc-member-name">{m.displayName}</div>
+                      {m.username && <div className="cc-member-handle">@{m.username}</div>}
+                    </div>
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

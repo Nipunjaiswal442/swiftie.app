@@ -268,6 +268,131 @@ export const getMyCommunitiesBySection = query({
   },
 });
 
+// ─── Query — get members of a community ──────────────────────────────────────
+export const getMembers = query({
+  args: { communityId: v.id("communities") },
+  handler: async (ctx, { communityId }) => {
+    const memberships = await ctx.db
+      .query("communityMembers")
+      .withIndex("by_community", (q) => q.eq("communityId", communityId))
+      .order("asc")
+      .take(100);
+    const users = await Promise.all(memberships.map((m) => ctx.db.get(m.userId)));
+    return users
+      .filter((u): u is NonNullable<typeof u> => u !== null)
+      .map((u) => ({
+        _id: u._id,
+        displayName: u.displayName,
+        username: u.username,
+        profilePhotoUrl: u.profilePhotoUrl,
+      }));
+  },
+});
+
+// ─── Mutation — apply to join a non-matched community ─────────────────────────
+export const applyToJoin = mutation({
+  args: {
+    communityId: v.id("communities"),
+    answers: v.object({
+      whyJoin:        v.string(),
+      currentFit:     v.string(),
+      identification: v.string(),
+      duration:       v.string(),
+      willRetake:     v.boolean(),
+    }),
+  },
+  handler: async (ctx, { communityId, answers }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.subject))
+      .unique();
+    if (!user) throw new Error("User not found");
+
+    // Validate answers
+    if (!answers.whyJoin.trim()) throw new Error("Please answer why you want to join");
+    if (answers.whyJoin.trim().length < 50) throw new Error("Please write at least 50 characters for why you want to join");
+    if (!answers.identification) throw new Error("Please select how you identify with this community");
+    if (!answers.duration) throw new Error("Please select how long you've held these views");
+
+    // Check already a member
+    const existingMembership = await ctx.db
+      .query("communityMembers")
+      .withIndex("by_community_and_user", (q) =>
+        q.eq("communityId", communityId).eq("userId", user._id)
+      )
+      .unique();
+    if (existingMembership) throw new Error("You are already a member of this community");
+
+    // Get the community to check section
+    const community = await ctx.db.get(communityId);
+    if (!community) throw new Error("Community not found");
+
+    // 3-community-per-section cap check
+    const sectionMemberships = await ctx.db
+      .query("communityMembers")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+    const sectionCommunities = await Promise.all(
+      sectionMemberships.map((m) => ctx.db.get(m.communityId))
+    );
+    const sectionCount = sectionCommunities.filter(
+      (c) => c !== null && c.section === community.section
+    ).length;
+    if (sectionCount >= 3) {
+      throw new Error(`You've reached the 3-community limit for ${community.section} communities`);
+    }
+
+    // 30-day cooldown check
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const recentApplications = await (ctx.db as any)
+      .query("communityApplications")
+      .withIndex("by_user_and_community", (q: any) =>
+        q.eq("userId", user._id).eq("communityId", communityId)
+      )
+      .collect();
+    const recentApp = recentApplications.find(
+      (a: any) => a.appliedAt > thirtyDaysAgo && a.status !== "rejected"
+    );
+    if (recentApp) {
+      throw new Error("You have already applied to this community recently. Please wait 30 days before applying again.");
+    }
+
+    // Deterministic auto-approval logic:
+    // Strongly identify + long-term + willing to retake = instant approval
+    const autoApprove =
+      answers.identification === "Identify strongly" &&
+      (answers.duration === "2+ years" || answers.duration === "All my life") &&
+      answers.willRetake === true;
+
+    const status = autoApprove ? "auto-approved" : "pending";
+    const now = Date.now();
+
+    await (ctx.db as any).insert("communityApplications", {
+      userId: user._id,
+      communityId,
+      answers,
+      status,
+      appliedAt: now,
+      decidedAt: autoApprove ? now : undefined,
+    });
+
+    if (autoApprove) {
+      // Join the community
+      await ctx.db.patch(communityId, { memberCount: community.memberCount + 1 });
+      await ctx.db.insert("communityMembers", {
+        communityId,
+        userId: user._id,
+        joinedAt: now,
+      });
+    }
+
+    return { status, communityId, communitySlug: community.slug };
+  },
+});
+
 // ─── Migration — add communities that are missing from the live DB ─────────────
 // Run once via: npx convex run communities:addMissingCommunities
 // Safe to run multiple times — only inserts slugs that don't exist yet.

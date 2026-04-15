@@ -16,6 +16,8 @@ import AssessIdeology from './pages/AssessIdeology'
 import AssessOccupation from './pages/AssessOccupation'
 import CommunityChatThread from './pages/CommunityChatThread'
 import CommunityPage from './pages/CommunityPage'
+import Explore from './pages/Explore'
+import ApplyToCommunity from './pages/ApplyToCommunity'
 
 import Nav from './components/Nav'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -84,6 +86,12 @@ function Router() {
         } />
         <Route path="/community/:slug" element={
           <ProtectedRoute><AppLayout><CommunityPage /></AppLayout></ProtectedRoute>
+        } />
+        <Route path="/explore" element={
+          <ProtectedRoute><AppLayout><Explore /></AppLayout></ProtectedRoute>
+        } />
+        <Route path="/explore/apply/:slug" element={
+          <ProtectedRoute><AppLayout><ApplyToCommunity /></AppLayout></ProtectedRoute>
         } />
 
         <Route path="*" element={<Navigate to="/" replace />} />
