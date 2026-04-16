@@ -42,6 +42,7 @@ export default function ApplyToCommunity() {
     personality: 'var(--saffron)',
     ideology:    'var(--white-pure)',
     occupation:  'var(--neon-green)',
+    custom:      'var(--saffron)',
   }[community.section] ?? 'var(--saffron)') : 'var(--saffron)'
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -278,7 +279,7 @@ export default function ApplyToCommunity() {
             {community.name}
           </div>
           <div style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: '10px', letterSpacing: '1px', color: 'var(--text-dim)', marginTop: '3px' }}>
-            {community.memberCount} members · {community.matchKey.toUpperCase()} · {community.section.toUpperCase()}
+            {community.memberCount} members · {community.matchKey?.toUpperCase() ?? community.section.toUpperCase()} · {community.section.toUpperCase()}
           </div>
         </div>
       </div>
@@ -326,7 +327,7 @@ export default function ApplyToCommunity() {
           <span className="apply-q-label">QUESTION 3 OF 5</span>
           <p className="apply-q-text">
             Do you genuinely identify with the{' '}
-            <span style={{ color: sectionColor }}>{community.matchKey.toUpperCase()}</span>{' '}
+            <span style={{ color: sectionColor }}>{community.matchKey?.toUpperCase() ?? community.name}</span>{' '}
             worldview, or are you exploring?
           </p>
           <div className="apply-radio-group">

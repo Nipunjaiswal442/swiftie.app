@@ -237,13 +237,13 @@ export const getMyCommunitiesBySection = query({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return { personality: [], ideology: [], occupation: [] };
+    if (!identity) return { personality: [], ideology: [], occupation: [], custom: [] };
 
     const user = await ctx.db
       .query("users")
       .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.subject))
       .unique();
-    if (!user) return { personality: [], ideology: [], occupation: [] };
+    if (!user) return { personality: [], ideology: [], occupation: [], custom: [] };
 
     const memberships = await ctx.db
       .query("communityMembers")
@@ -254,17 +254,100 @@ export const getMyCommunitiesBySection = query({
       memberships.map((m) => ctx.db.get(m.communityId))
     );
 
-    const result: { personality: typeof communities; ideology: typeof communities; occupation: typeof communities } = {
+    const result: {
+      personality: typeof communities;
+      ideology: typeof communities;
+      occupation: typeof communities;
+      custom: typeof communities;
+    } = {
       personality: [],
       ideology: [],
       occupation: [],
+      custom: [],
     };
 
     for (const c of communities) {
-      if (c) result[c.section].push(c);
+      if (!c) continue;
+      if (c.section === "personality") result.personality.push(c);
+      else if (c.section === "ideology") result.ideology.push(c);
+      else if (c.section === "occupation") result.occupation.push(c);
+      else if (c.section === "custom") result.custom.push(c);
     }
 
     return result;
+  },
+});
+
+// ─── Mutation — create a user-defined community ───────────────────────────────
+export const createCommunity = mutation({
+  args: {
+    name: v.string(),
+    description: v.string(),
+    icon: v.string(),
+    section: v.union(
+      v.literal("personality"),
+      v.literal("ideology"),
+      v.literal("occupation"),
+      v.literal("custom")
+    ),
+  },
+  handler: async (ctx, { name, description, icon, section }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.subject))
+      .unique();
+    if (!user) throw new Error("User not found");
+
+    if (!name.trim() || name.trim().length < 3)
+      throw new Error("Name must be at least 3 characters");
+    if (name.trim().length > 60)
+      throw new Error("Name must be 60 characters or fewer");
+    if (!description.trim() || description.trim().length < 20)
+      throw new Error("Description must be at least 20 characters");
+    if (!icon.trim()) throw new Error("Please select an icon");
+
+    // Generate unique slug
+    const baseSlug = name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .slice(0, 50);
+
+    let slug = baseSlug;
+    let suffix = 1;
+    while (true) {
+      const existing = await ctx.db
+        .query("communities")
+        .withIndex("by_slug", (q) => q.eq("slug", slug))
+        .unique();
+      if (!existing) break;
+      slug = `${baseSlug}-${suffix++}`;
+    }
+
+    const communityId = await ctx.db.insert("communities", {
+      slug,
+      name: name.trim(),
+      description: description.trim(),
+      icon: icon.trim(),
+      section,
+      memberCount: 1,
+      createdBy: user._id,
+      isUserCreated: true,
+    });
+
+    // Auto-join creator
+    await ctx.db.insert("communityMembers", {
+      communityId,
+      userId: user._id,
+      joinedAt: Date.now(),
+    });
+
+    return { communityId, slug };
   },
 });
 

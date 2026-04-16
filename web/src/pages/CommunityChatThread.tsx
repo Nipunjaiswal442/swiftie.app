@@ -92,11 +92,12 @@ export default function CommunityChatThread() {
     )
   }
 
-  const sectionColor = {
+  const sectionColor = ({
     personality: 'var(--saffron)',
     ideology: 'var(--white-pure)',
     occupation: 'var(--neon-green)',
-  }[community.section] ?? 'var(--saffron)'
+    custom: 'var(--saffron)',
+  } as Record<string, string>)[community.section] ?? 'var(--saffron)'
 
   return (
     <div className="community-chat-page">

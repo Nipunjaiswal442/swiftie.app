@@ -50,11 +50,12 @@ export default function CommunityPage() {
     )
   }
 
-  const sectionColor = {
+  const sectionColor = ({
     personality: 'var(--saffron)',
     ideology: 'var(--white-pure)',
     occupation: 'var(--neon-green)',
-  }[community.section] ?? 'var(--saffron)'
+    custom: 'var(--saffron)',
+  } as Record<string, string>)[community.section] ?? 'var(--saffron)'
 
   const handleJoin = async () => {
     await joinMutation({ communityId: community._id })
@@ -353,7 +354,7 @@ export default function CommunityPage() {
         <div className="community-header-top">
           <span className="community-header-icon">{community.icon}</span>
           <div className="community-header-info">
-            <p className="community-header-section">{community.section.toUpperCase()} / {community.matchKey.toUpperCase()}</p>
+            <p className="community-header-section">{community.section.toUpperCase()}{community.matchKey ? ` / ${community.matchKey.toUpperCase()}` : ''}</p>
             <h1 className="community-header-name" style={{ color: sectionColor }}>
               {community.name}
             </h1>

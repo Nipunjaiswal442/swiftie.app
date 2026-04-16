@@ -1,40 +1,24 @@
+import { useState } from 'react'
 import { useQuery } from 'convex/react'
 import { Link } from 'react-router-dom'
 import { api } from '../../convex/_generated/api'
 import UserAvatar from '../components/UserAvatar'
 
-// Section display config
-const SECTIONS = [
-  {
-    key: 'personality' as const,
-    label: 'PERSONALITY',
-    icon: '🧠',
-    color: 'var(--saffron)',
-    glowColor: 'rgba(255,153,51,0.15)',
-    assessRoute: '/assess/personality',
-  },
-  {
-    key: 'ideology' as const,
-    label: 'IDEOLOGY',
-    icon: '⚐',
-    color: 'var(--white-pure)',
-    glowColor: 'rgba(255,255,255,0.08)',
-    assessRoute: '/assess/ideology',
-  },
-  {
-    key: 'occupation' as const,
-    label: 'OCCUPATION',
-    icon: '🔧',
-    color: 'var(--neon-green)',
-    glowColor: 'rgba(0,255,65,0.08)',
-    assessRoute: '/assess/occupation',
-  },
-]
+const TABS = [
+  { key: 'personality', label: 'PERSONALITY', color: 'var(--saffron)',    icon: '🧠' },
+  { key: 'ideology',    label: 'IDEOLOGY',    color: 'var(--white-pure)', icon: '⚐'  },
+  { key: 'occupation',  label: 'OCCUPATION',  color: 'var(--neon-green)', icon: '🔧' },
+  { key: 'custom',      label: 'MINE',        color: 'var(--saffron)',    icon: '✦'  },
+] as const
+
+type TabKey = typeof TABS[number]['key']
 
 export default function Chat() {
   const me = useQuery(api.users.getMe)
   const myBySection = useQuery(api.communities.getMyCommunitiesBySection)
   const conversations = useQuery(api.messages.getConversations)
+
+  const [activeTab, setActiveTab] = useState<TabKey>('personality')
 
   const formatTime = (ts: number) => {
     const diff = Date.now() - ts
@@ -44,12 +28,8 @@ export default function Chat() {
     return new Date(ts).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }).toUpperCase()
   }
 
-  // Get matchKey from cached user fields
-  const matchKeys: Record<string, string | undefined> = {
-    personality: (me as any)?.personalityResult,
-    ideology:    (me as any)?.ideologyResult,
-    occupation:  (me as any)?.occupationResult,
-  }
+  const tabCommunities: any[] = myBySection ? (myBySection as any)[activeTab] ?? [] : []
+  const activeTabConfig = TABS.find(t => t.key === activeTab)!
 
   return (
     <div className="app-content">
@@ -60,123 +40,161 @@ export default function Chat() {
           letter-spacing: 3px;
           color: var(--text-dim);
           text-transform: uppercase;
-          padding: 4px 0 12px;
-          margin-top: 8px;
-          border-bottom: 1px solid rgba(255,255,255,0.05);
-          margin-bottom: 16px;
+          padding: 0;
+          margin: 0;
         }
-        .section-community-card {
+        /* ── Communities header row ── */
+        .communities-header-row {
           display: flex;
           align-items: center;
-          gap: 16px;
-          padding: 16px 20px;
-          background: rgba(13,13,26,0.6);
-          border: 1px solid;
-          margin-bottom: 12px;
-          cursor: pointer;
+          justify-content: space-between;
+          margin-bottom: 14px;
+        }
+        .add-community-btn {
+          font-family: 'Orbitron', sans-serif;
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 2px;
+          color: var(--saffron);
           text-decoration: none;
+          padding: 7px 14px;
+          border: 1px solid rgba(255,153,51,0.35);
+          clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 0 100%);
           transition: background 0.2s, box-shadow 0.2s;
-          position: relative;
-          overflow: hidden;
+          white-space: nowrap;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+        }
+        .add-community-btn:hover {
+          background: rgba(255,153,51,0.08);
+          box-shadow: 0 0 14px rgba(255,153,51,0.2);
+        }
+        /* ── Tabs ── */
+        .community-tabs {
+          display: flex;
+          gap: 0;
+          margin-bottom: 20px;
+          border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+        .community-tab {
+          font-family: 'Share Tech Mono', monospace;
+          font-size: 10px;
+          letter-spacing: 2px;
+          color: var(--text-dim);
+          background: transparent;
+          border: none;
+          border-bottom: 2px solid transparent;
+          padding: 8px 14px;
+          cursor: pointer;
+          transition: color 0.2s, border-bottom-color 0.2s;
+          text-transform: uppercase;
+          margin-bottom: -1px;
+        }
+        .community-tab:hover { color: var(--neon-white); }
+        /* ── Empty state ── */
+        .community-tab-empty {
+          padding: 28px 0 20px;
+          text-align: center;
+          font-family: 'Share Tech Mono', monospace;
+          font-size: 10px;
+          letter-spacing: 2px;
+          color: var(--text-dim);
+        }
+        .tab-empty-link {
+          display: inline-block;
+          margin-top: 12px;
+          font-family: 'Share Tech Mono', monospace;
+          font-size: 10px;
+          letter-spacing: 1.5px;
+          color: var(--neon-green);
+          text-decoration: none;
+          transition: opacity 0.2s;
+        }
+        .tab-empty-link:hover { opacity: 0.75; }
+        /* ── Community card grid ── */
+        .community-card-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          margin-bottom: 8px;
+        }
+        .community-grid-card {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          padding: 14px 18px;
+          background: rgba(13,13,26,0.55);
+          border: 1px solid rgba(255,255,255,0.07);
           clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+          transition: background 0.2s, border-color 0.2s;
         }
-        .section-community-card:hover {
-          background: rgba(13,13,26,0.9);
-          box-shadow: 0 0 20px var(--card-glow, rgba(255,153,51,0.08));
+        .community-grid-card:hover {
+          background: rgba(13,13,26,0.85);
+          border-color: rgba(255,153,51,0.15);
         }
-        .section-community-icon {
-          width: 48px;
-          height: 48px;
-          border-radius: 50%;
+        .community-grid-icon {
+          font-size: 22px;
+          flex-shrink: 0;
+          width: 44px;
+          height: 44px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 22px;
-          flex-shrink: 0;
-          border: 1px solid;
-          background: rgba(13,13,26,0.4);
+          background: rgba(255,153,51,0.06);
+          border-radius: 50%;
+          border: 1px solid rgba(255,153,51,0.12);
         }
-        .match-key-badge {
+        .community-grid-info { flex: 1; min-width: 0; }
+        .community-grid-name {
           font-family: 'Orbitron', sans-serif;
-          font-weight: 700;
-          font-size: 20px;
-          letter-spacing: 3px;
-          line-height: 1;
-          margin-bottom: 4px;
-        }
-        .community-card-name {
-          font-family: 'Share Tech Mono', monospace;
           font-size: 11px;
-          letter-spacing: 1.5px;
-          color: rgba(224,224,255,0.7);
+          font-weight: 600;
+          letter-spacing: 2px;
+          color: var(--neon-white);
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          max-width: 200px;
+          margin-bottom: 3px;
         }
-        .community-card-members {
+        .community-grid-members {
           font-family: 'Share Tech Mono', monospace;
           font-size: 9px;
           letter-spacing: 1px;
           color: var(--text-dim);
-          margin-top: 2px;
         }
-        .section-card-label {
-          position: absolute;
-          top: 10px;
-          right: 14px;
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 8px;
-          letter-spacing: 2px;
-          opacity: 0.45;
-        }
-        .section-placeholder-card {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          padding: 16px 20px;
-          background: rgba(13,13,26,0.3);
-          border: 1px dashed;
-          margin-bottom: 12px;
-          clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
-        }
-        .placeholder-icon {
-          width: 48px;
-          height: 48px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 22px;
-          flex-shrink: 0;
-          opacity: 0.3;
-        }
-        .placeholder-text {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 10px;
-          letter-spacing: 1px;
-          color: var(--text-dim);
-          margin-bottom: 8px;
-        }
-        .unlock-btn {
+        .community-grid-chat-btn {
           font-family: 'Orbitron', sans-serif;
           font-size: 10px;
           font-weight: 600;
           letter-spacing: 2px;
           text-decoration: none;
-          padding: 6px 14px;
-          border: 1px solid;
+          padding: 7px 14px;
+          border: 1px solid currentColor;
           clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 0 100%);
-          display: inline-block;
+          opacity: 0.75;
+          flex-shrink: 0;
           transition: opacity 0.2s;
         }
-        .unlock-btn:hover { opacity: 0.75; }
+        .community-grid-chat-btn:hover { opacity: 1; }
+        /* ── DMs section divider ── */
+        .dm-divider {
+          font-family: 'Share Tech Mono', monospace;
+          font-size: 10px;
+          letter-spacing: 3px;
+          color: var(--text-dim);
+          text-transform: uppercase;
+          padding: 4px 0 12px;
+          margin-top: 24px;
+          border-bottom: 1px solid rgba(255,255,255,0.05);
+          margin-bottom: 16px;
+        }
       `}</style>
 
-      <p className="page-title">// <span>ENCRYPTED MESSAGES</span></p>
+      <p className="page-title">// <span>MESSAGES</span></p>
 
       <div style={{
-        display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px',
+        display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '28px',
         padding: '10px 16px', background: 'rgba(0,68,204,0.08)',
         border: '1px solid rgba(0,68,204,0.2)',
         fontFamily: "'Share Tech Mono'", fontSize: '11px',
@@ -185,83 +203,77 @@ export default function Chat() {
         🔒 ALL MESSAGES ENCRYPTED END-TO-END WITH SIGNAL PROTOCOL
       </div>
 
-      {/* ── Three community section cards ────────────────── */}
-      <p className="chat-section-divider">// MY COMMUNITIES</p>
+      {/* ── My Communities Header ────────────────────────── */}
+      <div className="communities-header-row">
+        <p className="chat-section-divider">// MY COMMUNITIES</p>
+        <Link to="/community/create" className="add-community-btn">
+          + ADD COMMUNITY
+        </Link>
+      </div>
+      <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: '18px' }} />
 
+      {/* ── Tab row ── */}
+      <div className="community-tabs">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            className="community-tab"
+            style={activeTab === tab.key
+              ? { color: tab.color, borderBottomColor: tab.color }
+              : {}}
+            onClick={() => setActiveTab(tab.key)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Tab content ── */}
       {myBySection === undefined || me === undefined ? (
         <div className="loading-screen" style={{ minHeight: '80px' }}>
           <div className="loading-bar" />
         </div>
+      ) : tabCommunities.length === 0 ? (
+        <div className="community-tab-empty">
+          <span style={{ fontSize: '26px', marginBottom: '10px', display: 'block' }}>
+            {activeTabConfig.icon}
+          </span>
+          <p>NO COMMUNITIES YET</p>
+          {activeTab === 'custom' ? (
+            <Link to="/community/create" className="tab-empty-link">
+              CREATE YOUR FIRST COMMUNITY →
+            </Link>
+          ) : (
+            <Link to="/discover" className="tab-empty-link">
+              DISCOVER COMMUNITIES →
+            </Link>
+          )}
+        </div>
       ) : (
-        <div style={{ marginBottom: '8px' }}>
-          {SECTIONS.map(({ key, label, icon, color, glowColor, assessRoute }) => {
-            const matchKey = matchKeys[key]
-            const communities = (myBySection as any)[key] ?? []
-            // Primary community: the one matching the matchKey, else first joined
-            const primaryCommunity = communities.find((c: any) => c.matchKey === matchKey) ?? communities[0] ?? null
-
-            if (!matchKey || !primaryCommunity) {
-              // Placeholder: assessment not taken or no community yet
-              return (
-                <div
-                  key={key}
-                  className="section-placeholder-card"
-                  style={{ borderColor: `${color}33` }}
-                >
-                  <div className="placeholder-icon" style={{ borderColor: `${color}44`, border: `1px solid ${color}44` }}>
-                    {icon}
-                  </div>
-                  <div>
-                    <p className="placeholder-text">
-                      TAKE THE {label} ASSESSMENT TO UNLOCK YOUR COMMUNITY
-                    </p>
-                    <Link
-                      to={assessRoute}
-                      className="unlock-btn"
-                      style={{ color, borderColor: `${color}66` }}
-                    >
-                      TAKE ASSESSMENT →
-                    </Link>
-                  </div>
-                  <span className="section-card-label" style={{ color }}>{label}</span>
+        <div className="community-card-grid">
+          {tabCommunities.map((community: any) => (
+            <div key={community._id} className="community-grid-card">
+              <div className="community-grid-icon">{community.icon}</div>
+              <div className="community-grid-info">
+                <div className="community-grid-name">{community.name}</div>
+                <div className="community-grid-members">
+                  {community.memberCount} member{community.memberCount !== 1 ? 's' : ''}
                 </div>
-              )
-            }
-
-            return (
+              </div>
               <Link
-                key={key}
-                to={`/chat/community/${primaryCommunity.slug}`}
-                className="section-community-card"
-                style={{
-                  borderColor: `${color}44`,
-                  '--card-glow': glowColor,
-                } as React.CSSProperties}
+                to={`/chat/community/${community.slug}`}
+                className="community-grid-chat-btn"
+                style={{ color: activeTabConfig.color }}
               >
-                <div
-                  className="section-community-icon"
-                  style={{ borderColor: `${color}44`, color }}
-                >
-                  {primaryCommunity.icon}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="match-key-badge" style={{ color }}>
-                    {matchKey.toUpperCase()}
-                  </div>
-                  <div className="community-card-name">{primaryCommunity.name}</div>
-                  <div className="community-card-members">
-                    {primaryCommunity.memberCount} member{primaryCommunity.memberCount !== 1 ? 's' : ''}
-                  </div>
-                </div>
-                <span className="section-card-label" style={{ color }}>{label}</span>
+                CHAT →
               </Link>
-            )
-          })}
+            </div>
+          ))}
         </div>
       )}
 
       {/* ── Direct Messages ──────────────────────────────── */}
-      <p className="chat-section-divider" style={{ marginTop: '24px' }}>// DIRECT MESSAGES</p>
+      <p className="dm-divider">// DIRECT MESSAGES</p>
 
       {conversations === undefined ? (
         <div className="loading-screen" style={{ minHeight: '200px' }}>
