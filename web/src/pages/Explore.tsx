@@ -20,6 +20,7 @@ export default function Explore() {
       ...(myBySection.personality ?? []).map((c: any) => c._id),
       ...(myBySection.ideology    ?? []).map((c: any) => c._id),
       ...(myBySection.occupation  ?? []).map((c: any) => c._id),
+      ...((myBySection as any).custom  ?? []).map((c: any) => c._id),
     ])
     const nonMember = allCommunities.filter((c: any) => !myIds.has(c._id))
     grouped = {
@@ -174,8 +175,8 @@ export default function Explore() {
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div className="explore-card-name">{community.name}</div>
                           <div className="explore-card-meta">
-                            {community.memberCount} member{community.memberCount !== 1 ? 's' : ''} ·{' '}
-                            <span style={{ color }}>{community.matchKey.toUpperCase()}</span>
+                            {community.memberCount} member{community.memberCount !== 1 ? 's' : ''}
+                            {community.matchKey ? <>{' · '}<span style={{ color }}>{community.matchKey.toUpperCase()}</span></> : ''}
                           </div>
                         </div>
                       </div>
