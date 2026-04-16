@@ -88,12 +88,15 @@ export default defineSchema({
     section: v.union(
       v.literal("personality"),
       v.literal("ideology"),
-      v.literal("occupation")
+      v.literal("occupation"),
+      v.literal("custom")
     ),
-    matchKey: v.string(),
+    matchKey: v.optional(v.string()),
     description: v.string(),
     memberCount: v.number(),
     icon: v.string(),
+    createdBy: v.optional(v.id("users")),
+    isUserCreated: v.optional(v.boolean()),
   })
     .index("by_slug", ["slug"])
     .index("by_section", ["section"])

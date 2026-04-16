@@ -18,6 +18,7 @@ import CommunityChatThread from './pages/CommunityChatThread'
 import CommunityPage from './pages/CommunityPage'
 import Explore from './pages/Explore'
 import ApplyToCommunity from './pages/ApplyToCommunity'
+import CreateCommunity from './pages/CreateCommunity'
 
 import Nav from './components/Nav'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -92,6 +93,9 @@ function Router() {
         } />
         <Route path="/explore/apply/:slug" element={
           <ProtectedRoute><AppLayout><ApplyToCommunity /></AppLayout></ProtectedRoute>
+        } />
+        <Route path="/community/create" element={
+          <ProtectedRoute><AppLayout><CreateCommunity /></AppLayout></ProtectedRoute>
         } />
 
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -51,8 +51,13 @@ export default function Nav() {
               <li><Link to="/maya" style={isActive('/maya')}>MAYA ✦</Link></li>
               {me?.username && (
                 <li>
-                  <Link to={`/profile/${me.username}`} style={isActive('/profile')} title={me.displayName}>
+                  <Link
+                    to={`/profile/${me.username}`}
+                    style={{ ...isActive('/profile'), display: 'flex', alignItems: 'center', gap: '8px' }}
+                    title={me.displayName}
+                  >
                     <UserAvatar user={me} size={28} />
+                    <span>PROFILE</span>
                   </Link>
                 </li>
               )}
