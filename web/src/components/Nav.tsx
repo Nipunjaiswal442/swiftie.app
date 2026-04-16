@@ -49,12 +49,12 @@ export default function Nav() {
               <li><Link to="/discover" style={isActive('/discover')}>DISCOVER</Link></li>
               <li><Link to="/explore" style={isActive('/explore')}>EXPLORE</Link></li>
               <li><Link to="/maya" style={isActive('/maya')}>MAYA ✦</Link></li>
-              {me?.username && (
+              {me && (
                 <li>
                   <Link
-                    to={`/profile/${me.username}`}
+                    to={me.username ? `/profile/${me.username}` : '/onboarding'}
                     style={{ ...isActive('/profile'), display: 'flex', alignItems: 'center', gap: '8px' }}
-                    title={me.displayName}
+                    title={me.displayName ?? 'Profile'}
                   >
                     <UserAvatar user={me} size={28} />
                     <span>PROFILE</span>
