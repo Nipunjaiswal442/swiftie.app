@@ -1,371 +1,349 @@
 # SWIFTIE
 
 <p align="center">
-  <strong>India's privacy-first social media & messaging platform</strong><br/>
-  Connect · Chat · Encrypt
+  <strong>Find your people. Connect · Chat · Belong.</strong><br/>
+  A community-discovery social app for India — take an assessment, get matched to a community, start talking.
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/platform-iOS%20%7C%20Android%20%7C%20Web-blue" alt="Platform"/>
-  <img src="https://img.shields.io/badge/language-TypeScript-3178C6" alt="TypeScript"/>
-  <img src="https://img.shields.io/badge/framework-React%20Native%200.74%2B-61DAFB" alt="React Native"/>
-  <img src="https://img.shields.io/badge/backend-Node.js%2020%20LTS-339933" alt="Node.js"/>
-  <img src="https://img.shields.io/badge/database-MongoDB-47A248" alt="MongoDB"/>
-  <img src="https://img.shields.io/badge/encryption-Signal%20Protocol-6C4AB6" alt="Signal Protocol"/>
-  <img src="https://img.shields.io/badge/status-In%20Development-orange" alt="Status"/>
+  <img src="https://img.shields.io/badge/frontend-React%2018%20%2B%20Vite%206-61DAFB" alt="React + Vite"/>
+  <img src="https://img.shields.io/badge/language-TypeScript%205-3178C6" alt="TypeScript"/>
+  <img src="https://img.shields.io/badge/backend-Convex-EE342F" alt="Convex"/>
+  <img src="https://img.shields.io/badge/auth-Firebase%20Google%20Sign--In-FFCA28" alt="Firebase Auth"/>
+  <img src="https://img.shields.io/badge/AI-NVIDIA%20NIM%20%2B%20DeepSeek%20V4-76B900" alt="NVIDIA NIM"/>
+  <img src="https://img.shields.io/badge/deploy-Vercel-000000" alt="Vercel"/>
+  <img src="https://img.shields.io/badge/status-Beta-orange" alt="Status"/>
 </p>
 
 ---
 
-## Overview
+## Table of contents
 
-Swiftie is an Indian social media and messaging platform combining social networking (profiles, photo sharing, social feed) with a secure end-to-end encrypted messaging system powered by the Signal Protocol. Built with React Native (TypeScript) for a single cross-platform codebase covering iOS, Android, and Web.
-
-**Developer:** Nipun Jaiswal
-**GitHub:** [github.com/Nipunjaiswal442/swiftie.app](https://github.com/Nipunjaiswal442/swiftie.app)
-**Target Platforms:** iOS 14+, Android API 24+, Web
-**License:** Proprietary / Private Repository
-
----
-
-## Tech Stack
-
-| Layer | Technology | Version |
-|-------|-----------|---------|
-| Mobile UI | React Native | 0.74+ |
-| Web UI | React Native Web (Expo) | SDK 52 |
-| Language | TypeScript | 5.x (strict) |
-| Navigation | React Navigation | 6.x |
-| Backend | Node.js + Express.js | 20 LTS / 4.x |
-| Database | MongoDB (Mongoose ODM) | Atlas / Render |
-| Authentication | Firebase Auth (Google Sign-In) | 20.x |
-| Media Storage | Firebase Storage | 20.x |
-| Real-time | Socket.IO | 4.x |
-| Encryption | Signal Protocol (libsignal-client) | latest |
-| Deployment | Render (backend), Vercel (web), App Store + Play Store | — |
+- [What is Swiftie?](#what-is-swiftie)
+- [Features](#features)
+- [Architecture](#architecture)
+- [Project structure](#project-structure)
+- [Quick start](#quick-start)
+- [Environment variables](#environment-variables)
+- [Maya — the in-app AI companion](#maya--the-in-app-ai-companion)
+- [Data model](#data-model)
+- [Deployment](#deployment)
+- [Troubleshooting](#troubleshooting)
+- [Roadmap](#roadmap)
+- [Conventions](#conventions)
 
 ---
 
-## System Architecture
+## What is Swiftie?
 
-```
-+─────────────────────────────────────────────────────────────+
-│           MOBILE CLIENT (React Native + TypeScript)          │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐       │
-│  │  Auth    │ │ Profile  │ │   Chat   │ │   Feed   │       │
-│  │  Screen  │ │  Screen  │ │  Screen  │ │  Screen  │       │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘       │
-+─────────────────────────────────────────────────────────────+
-               │              │              │
-               ▼              ▼              ▼
-+─────────────────────────────────────────────────────────────+
-│                        API LAYER                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │  REST API    │  │  Socket.IO   │  │ Firebase SDK │      │
-│  │ (Express.js) │  │ (Real-time)  │  │(Auth+Store)  │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-+─────────────────────────────────────────────────────────────+
-               │              │              │
-               ▼              ▼              ▼
-+─────────────────────────────────────────────────────────────+
-│                       DATA LAYER                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │   MongoDB    │  │   Firebase   │  │   Firebase   │      │
-│  │  (Render)    │  │    Auth      │  │   Storage    │      │
-│  │ Users, Msgs  │  │ Google SSO   │  │ Photos/Media │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-+─────────────────────────────────────────────────────────────+
-```
+Swiftie is a web app that helps people find a community they actually fit into. Instead of
+following hashtags, you take short assessments (personality, ideology, occupation), get matched to
+a community of people with the same result, and are dropped straight into that community's group
+chat and discussion board. On top of that there is a personal feed, profiles, follows, private DMs,
+and **Maya** — an always-online AI friend who chats with you and explains the app in character.
+
+**Developer:** Nipun Jaiswal · [github.com/Nipunjaiswal442](https://github.com/Nipunjaiswal442)
+**Live app:** deployed on Vercel from this repository
+**License:** Proprietary / private repository
 
 ---
 
 ## Features
 
-| Feature | Description |
-|---------|-------------|
-| **Google Sign-In** | One-tap authentication via Firebase Auth |
-| **User Profiles** | Display name, @username, bio, profile + cover photos |
-| **Social Feed** | Posts from followed users, infinite scroll, pull-to-refresh |
-| **Photo Sharing** | Camera/gallery upload, smart compression (~500KB), 100MB/user |
-| **Like & Comment** | Full post interaction system |
-| **Follow System** | Follow/unfollow with real-time follower counts |
-| **E2E Encrypted Chat** | Signal Protocol: X3DH key exchange + Double Ratchet |
-| **Real-time Messaging** | Socket.IO WebSocket delivery, typing indicators, read receipts |
-| **User Search** | Debounced search by name or @username |
-| **Push Notifications** | Firebase Cloud Messaging for offline delivery |
-| **Cross-platform** | Single RN codebase for iOS + Android + Web |
+| Area | What you get |
+|------|--------------|
+| **Google Sign-In** | One-tap login via Firebase Auth; a Terms & Conditions gate on first login |
+| **Onboarding** | Pick a username, bio, age, location, pronouns, current role and interests |
+| **Assessments** | 30-question **Personality** (16 MBTI-style types), **Ideology** (progressive / liberal / conservative / libertarian) and **Occupation** (8 paths) quizzes |
+| **Auto-matched communities** | Finishing an assessment auto-joins you to the matching community. No manual joining |
+| **Discover & Explore** | Browse every community, see recommendations, apply to communities you did not match, or create your own |
+| **Community spaces** | Each community has a real-time group chat and a discussion board with posts and likes |
+| **Private DMs** | One-to-one conversations started from any profile, with read receipts |
+| **Feed & profiles** | Personal posts with photos and captions, likes, follow/unfollow, member rosters |
+| **Maya** | An AI companion (Maya Bora, a CSE student from Guwahati) powered by NVIDIA NIM. Remembers the conversation and doubles as an in-character help desk |
+| **Real-time everywhere** | Every list in the UI is a reactive Convex query, so chats, feeds and counts update live without polling |
 
 ---
 
-## E2E Encryption Protocol
+## Architecture
 
-Swiftie implements the **Signal Protocol** — the same standard used by Signal and WhatsApp.
+The product runs on two managed services plus Vercel for static hosting. There is no server you
+have to operate yourself.
 
 ```
-SENDER DEVICE                    SERVER                    RECEIVER DEVICE
-     │                              │                              │
-     │── X3DH Key Agreement ───────►│── Key Bundle Lookup ────────►│
-     │                              │                              │
-     │── Encrypted Message ────────►│── Store Ciphertext ─────────►│
-     │   (AES-256 via Double Ratchet)│  (Server sees ONLY bytes)    │
-     │                              │                              │
-     │                              │◄─ Decrypt locally ──────────│
+┌────────────────────────────────────────────────────────────────────────┐
+│  BROWSER  ·  React 18 + Vite + React Router  (web/src)                  │
+│  Landing · Login · Onboarding · Feed · Chat · Community · Maya · ...    │
+└───────────────┬───────────────────────────────┬────────────────────────┘
+                │ Firebase ID token             │ Convex React client
+                ▼                               ▼
+┌───────────────────────────┐   ┌────────────────────────────────────────┐
+│  FIREBASE                 │   │  CONVEX  (web/convex)                  │
+│  Auth (Google Sign-In)    │──▶│  Validates the Firebase token (OIDC)   │
+│  Storage (profile media)  │   │  Queries · Mutations · Actions         │
+└───────────────────────────┘   │  Tables: users, posts, messages,       │
+                                │  communities, mayaMessages, ...        │
+                                └──────────────────┬─────────────────────┘
+                                                   │ maya.sendToMaya (action)
+                                                   ▼
+                                ┌────────────────────────────────────────┐
+                                │  NVIDIA NIM  integrate.api.nvidia.com  │
+                                │  OpenAI-compatible chat completions    │
+                                │  default model: deepseek-ai/deepseek-v4-flash │
+                                └────────────────────────────────────────┘
 ```
 
-- **Identity Key Pair** — Long-term Ed25519 key, stored in device Keychain/Keystore
-- **X3DH** — Initial key agreement; derives shared secret without server involvement
-- **Double Ratchet** — Per-message key evolution; forward secrecy + break-in recovery
-- **AES-256-CBC** — Symmetric encryption of each message payload
-- **Server Role** — Relays ciphertext only. Zero plaintext ever reaches the server.
+- **Frontend** — React 18, TypeScript (strict), Vite 6, React Router 6, Zustand for auth state.
+- **Backend** — [Convex](https://convex.dev): schema, queries, mutations and actions live in
+  `web/convex/`. The frontend subscribes with `useQuery`, writes with `useMutation`, and calls
+  third-party APIs through `useAction`.
+- **Auth** — Firebase Google Sign-In on the client; Convex verifies the Firebase ID token through
+  the OIDC provider declared in `web/convex/auth.config.js`.
+- **AI** — the Maya action calls NVIDIA's OpenAI-compatible endpoint from the Convex server. The
+  API key never reaches the browser.
+- **Legacy** — `server/` is the original Express + Socket.IO + MongoDB backend. It is **not used**
+  by the current web app and is kept only for reference.
 
 ---
 
-## Database Schema (MongoDB)
-
-### `users`
-```ts
-{ firebaseUid, email, username, displayName, bio, profilePhotoUrl, coverPhotoUrl,
-  followers[], following[], postsCount, storageUsed, storageLimit (100MB),
-  signalIdentityKey, signalSignedPreKey, signalPreKeys[], isOnline, lastSeen }
-```
-
-### `posts`
-```ts
-{ author, imageUrl, caption, likes[], likesCount, comments[], commentsCount, createdAt }
-```
-
-### `messages`
-```ts
-{ conversationId, sender, recipient, ciphertext, messageType,
-  senderRatchetKey, messageNumber, timestamp, deliveredAt, readAt }
-```
-
-### `conversations`
-```ts
-{ participants[2], conversationId, lastMessage, unreadCount{}, createdAt, updatedAt }
-```
-
----
-
-## API Endpoints
-
-Base URL: `https://swiftie-api.onrender.com/api/v1`
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/auth/firebase` | Exchange Firebase token → JWT |
-| GET | `/users/me` | Current user profile |
-| PUT | `/users/me` | Update profile |
-| GET | `/users/:id` | Get user by ID |
-| POST | `/users/:id/follow` | Follow a user |
-| DELETE | `/users/:id/follow` | Unfollow a user |
-| GET | `/users/search?q=` | Search users |
-| GET | `/feed` | Paginated feed |
-| POST | `/posts` | Create post |
-| GET | `/posts/:id` | Get post |
-| DELETE | `/posts/:id` | Delete own post |
-| POST | `/posts/:id/like` | Like post |
-| DELETE | `/posts/:id/like` | Unlike post |
-| POST | `/posts/:id/comments` | Add comment |
-| GET | `/conversations` | List conversations |
-| GET | `/conversations/:id/messages` | Get messages |
-| POST | `/messages` | Send message |
-| PUT | `/messages/:id/read` | Mark as read |
-| GET | `/keys/:userId` | Get Signal public keys |
-| POST | `/keys/prekeys` | Upload pre-key bundle |
-
-### Socket.IO Events
-
-| Event | Direction | Description |
-|-------|-----------|-------------|
-| `connect` | Client→Server | Authenticate with JWT |
-| `message:send` | Client→Server | Send encrypted message |
-| `message:receive` | Server→Client | Deliver encrypted message |
-| `message:delivered` | Server→Client | Delivery confirmation |
-| `message:read` | Client→Server | Mark as read |
-| `typing:start` | Client→Server | Typing indicator on |
-| `typing:stop` | Client→Server | Typing indicator off |
-| `user:online` | Server→Client | User came online |
-| `user:offline` | Server→Client | User went offline |
-
----
-
-## Project Structure
+## Project structure
 
 ```
 swiftie.app/
 ├── README.md
-├── package.json              # Monorepo root
-├── vercel.json               # Vercel deployment config
-├── landing/
-│   └── index.html            # Marketing landing page (static)
-├── mobile/                   # Swiftie app (Expo + React Native + Web)
-│   ├── app/                  # Expo Router screens (welcome, feed, chat, profile...)
-│   ├── components/           # Reusable UI (cards, landing sections, effects)
-│   ├── services/             # API, socket, encryption, Firebase integrations
-│   └── package.json
-└── server/                   # Express backend (TypeScript)
-    ├── src/
-    │   ├── index.ts          # Express + Socket.IO entry
-    │   ├── config/
-    │   │   ├── db.ts         # MongoDB connection
-    │   │   └── firebase-admin.ts
-    │   ├── models/
-    │   │   ├── User.ts, Post.ts, Message.ts, Conversation.ts
-    │   ├── routes/
-    │   │   ├── auth.ts, users.ts, posts.ts, messages.ts, keys.ts
-    │   ├── middleware/
-    │   │   ├── authMiddleware.ts, rateLimiter.ts, errorHandler.ts
-    │   ├── socket/
-    │   │   └── socketHandler.ts
-    │   └── utils/
-    │       ├── jwt.ts, storageTracker.ts
-    └── package.json
+├── package.json                 # Monorepo root scripts (dev / build → web/)
+├── vercel.json                  # Vercel build + SPA rewrite
+├── web/                         # The app
+│   ├── index.html
+│   ├── vite.config.ts
+│   ├── .env.example             # Client-side variables (Vercel)
+│   ├── convex/                  # Backend (deployed to Convex)
+│   │   ├── schema.ts            # All tables + indexes
+│   │   ├── auth.config.js       # Firebase OIDC provider
+│   │   ├── users.ts             # Profiles, follow/unfollow, search
+│   │   ├── posts.ts             # Personal feed + likes
+│   │   ├── messages.ts          # Private DMs
+│   │   ├── communities.ts       # Communities, membership, applications, seeding
+│   │   ├── communityPosts.ts    # Community discussion board
+│   │   ├── communityMessages.ts # Community group chats
+│   │   ├── assessments.ts       # Assessment results + auto-join
+│   │   ├── maya.ts              # Maya AI companion (NVIDIA NIM action)
+│   │   └── _generated/          # Convex codegen (committed)
+│   └── src/
+│       ├── App.tsx              # Routes
+│       ├── firebase.ts          # Firebase client init
+│       ├── useFirebaseAuth.ts   # Auth hook wiring Firebase → Convex
+│       ├── store/authStore.ts   # Zustand auth store
+│       ├── components/          # Nav, ProtectedRoute, UserAvatar
+│       ├── data/                # Assessment question banks
+│       ├── pages/               # One file per route (Feed, Chat, MayaChat, ...)
+│       └── theme.css            # Global neon/terminal theme
+└── server/                      # LEGACY Express backend (unused, reference only)
 ```
 
 ---
 
-## Quick Start
+## Quick start
 
 ### Prerequisites
-- Node.js 20 LTS
-- MongoDB Atlas account (or local MongoDB)
-- Firebase project with Google Auth enabled
 
-### 1. Clone
+- Node.js 20 LTS
+- A [Firebase](https://console.firebase.google.com) project with **Google** sign-in enabled
+- A [Convex](https://dashboard.convex.dev) account (free tier is fine)
+- An [NVIDIA API key](https://build.nvidia.com) (`nvapi-…`) if you want Maya to reply
+
+### 1. Clone and install
+
 ```bash
 git clone https://github.com/Nipunjaiswal442/swiftie.app.git
-cd swiftie.app
+cd swiftie.app/web
+npm install
 ```
 
-### 2. Backend
+### 2. Configure the client
+
 ```bash
-cd server
-npm install
-cp .env.example .env   # Fill in your secrets
-npm run dev            # Starts on http://localhost:5000
+cp .env.example .env
+# fill in the VITE_FIREBASE_* values from Firebase → Project settings → Your apps
 ```
 
-### 3. Web App (React Native Web via Expo)
+### 3. Start Convex and the dev server (two terminals)
+
 ```bash
-cd mobile
-npm install
-npm run web            # Starts Expo web dev server
+# terminal 1 — pushes web/convex/ to your dev deployment and watches for changes
+npx convex dev
+
+# terminal 2 — Vite on http://localhost:5173
+npm run dev
 ```
 
-### 4. Mobile (React Native)
-```bash
-npm install
-npx react-native start          # Metro bundler
-npx react-native run-android    # Android
-npx react-native run-ios        # iOS (macOS only)
-```
+`npx convex dev` prints your deployment URL. Put it in `VITE_CONVEX_URL` in `web/.env`.
+
+### 4. Configure the backend
+
+In the Convex dashboard for the deployment, open **Settings → Environment Variables** and add:
+
+| Variable | Required | Example |
+|----------|----------|---------|
+| `NVIDIA_API_KEY` | yes, for Maya | `nvapi-xxxxxxxx` |
+| `NVIDIA_MODEL` | no | `deepseek-ai/deepseek-v4-flash` |
+
+Update the Firebase project id in `web/convex/auth.config.js` if you are not using the
+original Firebase project.
+
+### 5. Seed communities (once per deployment)
+
+Run the `communities:seedCommunities` mutation from the Convex dashboard **Functions** tab.
+It creates the built-in personality / ideology / occupation communities that assessments match into.
 
 ---
 
-## Environment Variables
+## Environment variables
 
-### Server (`server/.env`)
-```env
-PORT=5000
-NODE_ENV=development
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/swiftie
-JWT_SECRET=your_256_bit_random_secret
-JWT_EXPIRY=7d
-FIREBASE_SERVICE_ACCOUNT=./firebase-service-account.json
-CORS_ORIGIN=http://localhost:5173
-RATE_LIMIT_WINDOW=15
-RATE_LIMIT_MAX=100
-```
+### Client — `web/.env` locally, Vercel project settings in production
 
-### Web Client (`mobile/.env`)
-```env
-EXPO_PUBLIC_API_BASE_URL=http://localhost:5000/api/v1
-EXPO_PUBLIC_SOCKET_URL=http://localhost:5000
-```
+| Variable | Purpose |
+|----------|---------|
+| `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID`, `VITE_FIREBASE_MEASUREMENT_ID` | Firebase web SDK config |
+| `VITE_CONVEX_URL` | Your Convex deployment URL (`https://<name>.convex.cloud`) |
+| `CONVEX_DEPLOY_KEY` | Production deploy key so the Vercel build can push `web/convex/` |
 
-> **NEVER commit `.env` files or `firebase-service-account.json` to Git.**
+### Backend — Convex dashboard → Settings → Environment Variables
+
+| Variable | Purpose |
+|----------|---------|
+| `NVIDIA_API_KEY` | Bearer token for `integrate.api.nvidia.com`. Required for Maya |
+| `NVIDIA_MODEL` | Model id for Maya. Optional; defaults to `deepseek-ai/deepseek-v4-flash` |
+
+> Never commit `.env` files. The NVIDIA key lives only in Convex, so it is never shipped to the browser.
+
+---
+
+## Maya — the in-app AI companion
+
+Maya is implemented as a single Convex action, `sendToMaya` in `web/convex/maya.ts`:
+
+1. Verifies the caller's Firebase identity and ensures a `users` row exists.
+2. Loads the last 40 messages of that user's Maya history for context.
+3. Saves the user's message so it appears in the UI immediately.
+4. Calls NVIDIA NIM with the persona system prompt, the history and the new message.
+5. Saves and returns the reply. The UI updates through the reactive `getMayaMessages` query.
+
+### Choosing a model
+
+Set `NVIDIA_MODEL` in the Convex dashboard. Any chat model on
+[build.nvidia.com](https://build.nvidia.com) works. NVIDIA ids are `vendor/model`:
+
+| You type | Sent to NVIDIA |
+|----------|----------------|
+| *(unset)* | `deepseek-ai/deepseek-v4-flash` |
+| `deepseek-ai/deepseek-v4-flash` | `deepseek-ai/deepseek-v4-flash` |
+| `deepseek-v4-flash-0731` | `deepseek-ai/deepseek-v4-flash-0731`, then `deepseek-ai/deepseek-v4-flash` if NVIDIA answers 404 |
+| `gemma-4-31b-it` | `google/gemma-4-31b-it` |
+
+Bare ids get the vendor prefix added automatically. If NVIDIA returns **404** for a model
+(dated snapshots such as `-0731` are only enabled for some accounts), the action tries the
+un-dated id and finally the default model before giving up, and logs each attempt in the
+Convex dashboard **Logs** tab.
+
+### DeepSeek specifics
+
+DeepSeek V3.1 / V4 on NIM expose a "thinking" mode via `chat_template_kwargs`. Maya sends it
+switched **off**: replies come back faster, the endpoint does not stall waiting for a reasoning
+budget, and reasoning tokens cannot consume the whole `max_tokens` allowance and leave the
+answer empty. Any `<think>…</think>` block that still appears in the content is stripped.
+
+Requests time out after 90 seconds so a stalled upstream never leaves the chat spinner running forever.
+
+---
+
+## Data model
+
+All tables are declared in `web/convex/schema.ts`. Every document also carries Convex's
+`_id` and `_creationTime`.
+
+| Table | Key fields | Purpose |
+|-------|-----------|---------|
+| `users` | `tokenIdentifier` (Firebase UID), `username`, `displayName`, `bio`, photos, `age`, `location`, `pronouns`, `currentRole`, `interests[]`, cached `personalityResult` / `ideologyResult` / `occupationResult` | Profiles |
+| `follows` | `followerId`, `followingId` | Follow graph |
+| `posts`, `likes` | `authorId`, `imageUrl`, `caption`, counters | Personal feed |
+| `conversations`, `messages` | `participantIds[]`, `senderId`, `content`, `readAt` | Private DMs |
+| `assessmentResults` | `userId`, `section`, result | Per-user assessment outcomes |
+| `communities` | `slug`, `name`, `section` (`personality` / `ideology` / `occupation` / `custom`), `matchKey`, `memberCount`, `icon`, `isUserCreated` | Built-in and user-created communities |
+| `communityMembers` | `communityId`, `userId`, `joinedAt` | Membership |
+| `communityPosts`, `communityPostLikes` | `communityId`, `authorId`, `content`, counters | Discussion boards |
+| `communityMessages` | `communityId`, `senderId`, `content` | Group chats |
+| `communityApplications` | `userId`, `communityId`, `answers`, `status` | Apply-to-join flow for unmatched communities |
+| `mayaMessages` | `userId`, `role` (`user` / `assistant`), `content` | Maya conversation history |
+
+Access control is enforced inside each Convex function via `ctx.auth.getUserIdentity()`.
 
 ---
 
 ## Deployment
 
-### Backend → Render
-1. Create Web Service on [render.com](https://render.com), connect repo
-2. Root directory: `server/`
-3. Build: `npm install && npm run build`
-4. Start: `npm start`
-5. Add all env vars in Render dashboard
-6. Upload `firebase-service-account.json` as a secret file
+### Web + backend → Vercel (one build)
 
-### Web App → Vercel
-```bash
-vercel --prod  # or connect GitHub repo in Vercel dashboard
+`vercel.json` runs `npm run build:ci` inside `web/`, which is:
+
+```
+npx convex deploy --cmd 'npm run build' || npm run build
 ```
 
-### Mobile → App Stores
-- **iOS:** Xcode → Archive → App Store Connect → TestFlight
-- **Android:** `cd android && ./gradlew assembleRelease` → Google Play Console
-- **EAS Build:** `eas build --platform all`
+With `CONVEX_DEPLOY_KEY` set in Vercel, each production build first pushes `web/convex/` to
+the production Convex deployment and injects the matching `VITE_CONVEX_URL`, then builds the
+Vite bundle into `web/dist`. If the Convex deploy step fails, the build still produces the
+static site so the frontend is never taken down by a backend deploy hiccup.
+
+Steps:
+
+1. Import the GitHub repo in Vercel (framework preset: **Vite**, root: repository root).
+2. Add every `VITE_FIREBASE_*` variable plus `VITE_CONVEX_URL` and `CONVEX_DEPLOY_KEY`.
+3. Add `NVIDIA_API_KEY` (and optionally `NVIDIA_MODEL`) in the **Convex** dashboard, not Vercel.
+4. Push to the default branch. Vercel builds and deploys automatically.
+
+Changing only Convex environment variables does **not** require a redeploy; actions read them
+at runtime.
 
 ---
 
-## Development Roadmap
+## Troubleshooting
 
-| Phase | Scope | Status |
-|-------|-------|--------|
-| 1 | Project setup, navigation, Firebase Auth | ✅ In Progress |
-| 2 | User profiles (CRUD), Firebase Storage | 🔄 Pending |
-| 3 | Post creation, feed, likes, comments | 🔄 Pending |
-| 4 | Real-time chat with Socket.IO | 🔄 Pending |
-| 5 | Signal Protocol E2E encryption | 🔄 Pending |
-| 6 | Push notifications (FCM), polish | 🔄 Pending |
-| 7 | Testing, performance optimization | 🔄 Planned |
-| 8 | Beta launch (TestFlight + Play Console) | 🔄 Planned |
-
----
-
-## Coding Conventions
-
-- TypeScript strict mode (`strict: true`)
-- Functional components with React Hooks only
-- `async/await` everywhere — no raw `.then()` chains
-- All API responses: `{ success: boolean, data?: any, error?: string }`
-- Commit messages: Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`)
-- **Never** log, store, or transmit plaintext message content on the server
+| Symptom | Likely cause | Fix |
+|---------|--------------|-----|
+| Maya shows the typing dots and then an error `NVIDIA_API_KEY is not set` | Key missing in Convex | Add `NVIDIA_API_KEY` in the Convex dashboard for the **same deployment** the site uses (dev vs prod) |
+| `NVIDIA API rejected the key (401)` | Wrong or expired key, or pasted with quotes/spaces | Generate a new key at build.nvidia.com and paste only the `nvapi-…` value |
+| `None of the configured NVIDIA models are enabled for this API key` | `NVIDIA_MODEL` points at a model your account cannot call | Use an id shown on build.nvidia.com, e.g. `deepseek-ai/deepseek-v4-flash` |
+| Maya never answers, no error for a long time | Upstream stall | The action now aborts after 90 s with a visible error. Check the Convex **Logs** tab for the model used and the upstream response |
+| `Maya returned an empty response` | Model produced only reasoning or hit the token limit | Retry; if it persists with a custom model, switch to the default model |
+| Nothing loads after login | `VITE_CONVEX_URL` points at a different deployment than the one `convex deploy` pushed to | Align the URL and deploy key, then rebuild |
+| Communities page is empty | Seed not run | Run `communities:seedCommunities` from the Convex dashboard |
 
 ---
 
-## Security Rules
+## Roadmap
 
-1. Messages are E2E encrypted — server never sees plaintext
-2. All JWT verification happens in `authMiddleware.ts`
-3. Image uploads compressed client-side before Firebase Storage upload
-4. Storage quota enforced: `storageUsed + fileSize ≤ storageLimit (100MB)`
-5. Socket.IO connections verified with JWT on handshake
-6. All secrets via environment variables — never hardcoded
-
----
-
-## Firebase Storage Budget (per user)
-
-| Category | Limit | Notes |
-|----------|-------|-------|
-| Profile Photo | 5 MB | Compressed JPEG |
-| Cover Photo | 5 MB | Compressed JPEG |
-| Post Images | 70 MB | ~14 posts |
-| Chat Media | 20 MB | Encrypted attachments |
-| **Total** | **100 MB** | Tracked in `users.storageUsed` |
+| Item | Status |
+|------|--------|
+| Assessments, auto-matched communities, group chats, discussion boards | ✅ Shipped |
+| Personal feed, profiles, follows, private DMs | ✅ Shipped |
+| Maya AI companion on NVIDIA NIM (DeepSeek V4 Flash) | ✅ Shipped |
+| Apply-to-join and user-created communities | ✅ Shipped |
+| Streaming Maya replies | 🔄 Planned |
+| Push notifications | 🔄 Planned |
+| End-to-end encrypted DMs | 🔄 Planned |
+| Native mobile apps | 🔄 Planned |
 
 ---
 
-## Made in India
+## Conventions
 
-Designed for the Indian digital ecosystem. Privacy-first approach aligned with India's data sovereignty vision.
-
-**Developer:** Nipun Jaiswal
-**Contact:** [github.com/Nipunjaiswal442](https://github.com/Nipunjaiswal442)
+- TypeScript strict mode everywhere; `tsc -b` must pass before `vite build`.
+- Functional React components with hooks only; no class components.
+- Every Convex function checks `ctx.auth.getUserIdentity()` before touching data.
+- Third-party secrets are read from Convex environment variables inside actions, never bundled.
+- Commit messages follow Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`).
 
 ---
 
-*Swiftie © 2026 — All Rights Reserved*
+<p align="center">Made in India · Swiftie © 2026 — All Rights Reserved</p>

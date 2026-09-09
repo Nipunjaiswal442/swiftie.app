@@ -101,6 +101,191 @@ export const saveMessage = internalMutation({
   },
 });
 
+// ─── NVIDIA NIM configuration ────────────────────────────────────────────────
+// Model + key are read from the Convex deployment's environment variables
+// (Convex dashboard → Settings → Environment Variables), never from the repo.
+//
+//   NVIDIA_API_KEY   required  — "nvapi-…" key from build.nvidia.com
+//   NVIDIA_MODEL     optional  — defaults to DEFAULT_MODEL below
+//
+// NVIDIA model ids are "vendor/model" (e.g. "deepseek-ai/deepseek-v4-flash").
+// A bare id such as "deepseek-v4-flash-0731" is normalised in resolveModelCandidates.
+const NVIDIA_CHAT_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
+const DEFAULT_MODEL = "deepseek-ai/deepseek-v4-flash";
+const REQUEST_TIMEOUT_MS = 90_000;
+const MAX_TOKENS = 1024;
+
+const VENDOR_PREFIXES: Array<[RegExp, string]> = [
+  [/^deepseek/i, "deepseek-ai"],
+  [/^gemma/i, "google"],
+  [/nemotron/i, "nvidia"], // before llama: "llama-3.x-nemotron-*" is an NVIDIA model
+  [/^llama/i, "meta"],
+  [/^mistral|^mixtral/i, "mistralai"],
+  [/^qwen/i, "qwen"],
+];
+
+/** Read an env var, tolerating stray whitespace / surrounding quotes from copy-paste. */
+function readEnv(name: string): string | undefined {
+  const raw = process.env[name];
+  if (!raw) return undefined;
+  const cleaned = raw.trim().replace(/^["']|["']$/g, "").trim();
+  return cleaned || undefined;
+}
+
+/** Turn whatever is configured into a NVIDIA "vendor/model" id. */
+export function normalizeModelId(raw: string | undefined): string {
+  const id = (raw ?? "").trim();
+  if (!id) return DEFAULT_MODEL;
+  if (id.includes("/")) return id;
+  const lower = id.toLowerCase();
+  for (const [pattern, vendor] of VENDOR_PREFIXES) {
+    if (pattern.test(lower)) return `${vendor}/${lower}`;
+  }
+  return id;
+}
+
+/**
+ * Ordered list of models to try. The configured model goes first; if it carries a
+ * dated suffix (e.g. "deepseek-v4-flash-0731") the un-suffixed id is tried next,
+ * because NVIDIA gates dated snapshots per account and returns 404 for most keys.
+ * DEFAULT_MODEL is always the last resort.
+ */
+export function resolveModelCandidates(raw: string | undefined): string[] {
+  const primary = normalizeModelId(raw);
+  const candidates = [primary];
+  const undated = primary.replace(/-\d{4}$/, "");
+  if (undated !== primary) candidates.push(undated);
+  candidates.push(DEFAULT_MODEL);
+  return Array.from(new Set(candidates));
+}
+
+function isDeepSeek(model: string): boolean {
+  return model.toLowerCase().includes("deepseek");
+}
+
+function buildRequestBody(model: string, messages: Array<{ role: string; content: string }>) {
+  const body: Record<string, unknown> = {
+    model,
+    messages,
+    max_tokens: MAX_TOKENS,
+    temperature: 0.85,
+    top_p: 0.95,
+    stream: false,
+  };
+  if (isDeepSeek(model)) {
+    // DeepSeek V3.1 / V4 on NVIDIA NIM select "thinking" mode through
+    // chat_template_kwargs. Maya is a persona chat, so thinking is switched off:
+    // it keeps replies fast, avoids the endpoint stalling when the flag is
+    // absent, and stops reasoning tokens from eating the whole max_tokens budget
+    // (which surfaces as an empty `content`). Both spellings are sent because
+    // NVIDIA's examples use `thinking` while the upstream template uses
+    // `enable_thinking`; unknown template kwargs are ignored.
+    body.chat_template_kwargs = { thinking: false, enable_thinking: false };
+  }
+  return body;
+}
+
+type ChatCompletion = {
+  choices?: Array<{
+    message?: {
+      content?: string | null;
+      reasoning_content?: string | null;
+      reasoning?: string | null;
+    };
+    finish_reason?: string | null;
+  }>;
+};
+
+/** fetch with a hard timeout so a stalled upstream never leaves the UI spinning. */
+async function fetchWithTimeout(input: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = typeof AbortController !== "undefined" ? new AbortController() : undefined;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      controller?.abort();
+      reject(new Error(`NVIDIA API timed out after ${Math.round(timeoutMs / 1000)}s`));
+    }, timeoutMs);
+  });
+  try {
+    return await Promise.race([
+      fetch(input, controller ? { ...init, signal: controller.signal } : init),
+      timeout,
+    ]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
+/** Extract Maya's reply text from a chat completion, stripping any inline reasoning. */
+export function extractReply(data: ChatCompletion): string {
+  const message = data.choices?.[0]?.message;
+  let text = message?.content ?? "";
+  // Some reasoning models emit <think>…</think> inline; never show that to the user.
+  text = text.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+  return text;
+}
+
+/**
+ * Call NVIDIA NIM, walking the candidate list on 404 (model not enabled for this
+ * account). Any other failure is surfaced immediately with the upstream detail.
+ */
+async function askNvidia(
+  apiKey: string,
+  candidates: string[],
+  messages: Array<{ role: string; content: string }>
+): Promise<{ model: string; reply: string }> {
+  const unavailable: string[] = [];
+
+  for (const model of candidates) {
+    const response = await fetchWithTimeout(
+      NVIDIA_CHAT_URL,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(buildRequestBody(model, messages)),
+      },
+      REQUEST_TIMEOUT_MS
+    );
+
+    if (response.status === 404) {
+      const detail = await response.text();
+      console.warn(`[maya] model "${model}" not available (404): ${detail.slice(0, 200)}`);
+      unavailable.push(model);
+      continue;
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      throw new Error(
+        `NVIDIA API rejected the key (${response.status}). Check NVIDIA_API_KEY in the Convex dashboard.`
+      );
+    }
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`NVIDIA API ${response.status} for model "${model}": ${errText.slice(0, 500)}`);
+    }
+
+    const data = (await response.json()) as ChatCompletion;
+    const reply = extractReply(data);
+    if (!reply) {
+      const finish = data.choices?.[0]?.finish_reason ?? "unknown";
+      throw new Error(
+        `Maya returned an empty response from "${model}" (finish_reason: ${finish}) — try again.`
+      );
+    }
+    return { model, reply };
+  }
+
+  throw new Error(
+    `None of the configured NVIDIA models are enabled for this API key: ${unavailable.join(", ")}. ` +
+      `Set NVIDIA_MODEL in the Convex dashboard to a model listed at build.nvidia.com.`
+  );
+}
+
 // ─── Public action — send message and get Maya's AI reply ────────────────────
 export const sendToMaya = action({
   args: { content: v.string() },
@@ -108,6 +293,19 @@ export const sendToMaya = action({
     // ctx.auth works in actions — extract identity here, not in child functions
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
+
+    const trimmed = content.trim();
+    if (!trimmed) throw new Error("Message is empty");
+
+    // Validate config before touching the database so a misconfigured
+    // deployment fails fast without leaving an orphaned user message.
+    const apiKey = readEnv("NVIDIA_API_KEY");
+    if (!apiKey) {
+      throw new Error(
+        "NVIDIA_API_KEY is not set — add it in the Convex dashboard environment variables."
+      );
+    }
+    const candidates = resolveModelCandidates(readEnv("NVIDIA_MODEL") ?? readEnv("MAYA_MODEL"));
 
     // ensureUser: get existing user OR create one — guaranteed non-null result
     // Uses runMutation (not runQuery) — the correct call type from an action
@@ -124,66 +322,26 @@ export const sendToMaya = action({
     await ctx.runMutation(internal.maya.saveMessage, {
       userId,
       role: "user",
-      content,
+      content: trimmed,
     });
-
-    const apiKey = process.env.NVIDIA_API_KEY;
-    if (!apiKey) {
-      throw new Error(
-        "NVIDIA_API_KEY is not set — add it in the Convex dashboard environment variables."
-      );
-    }
 
     // 3. Build message array: system prompt → history → current user message
     const apiMessages: Array<{ role: string; content: string }> = [
       { role: "system", content: MAYA_SYSTEM_PROMPT },
       ...history.map((m) => ({ role: m.role, content: m.content })),
-      { role: "user", content },
+      { role: "user", content: trimmed },
     ];
 
-    const response = await fetch(
-      "https://integrate.api.nvidia.com/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemma-4-31b-it",
-          messages: apiMessages,
-          max_tokens: 1024,
-          temperature: 0.85,
-          top_p: 0.95,
-          stream: false,
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`NVIDIA API ${response.status}: ${errText}`);
-    }
-
-    const data = (await response.json()) as {
-      choices: Array<{ message: { content: string } }>;
-    };
-
-    let mayaResponse = data.choices?.[0]?.message?.content ?? "";
-
-    // Strip <think>…</think> reasoning tokens that Gemma-4 may emit
-    mayaResponse = mayaResponse.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
-
-    if (!mayaResponse) throw new Error("Maya returned an empty response — try again.");
+    const { model, reply } = await askNvidia(apiKey, candidates, apiMessages);
+    console.log(`[maya] replied via ${model} (${reply.length} chars)`);
 
     // 4. Save Maya's reply
     await ctx.runMutation(internal.maya.saveMessage, {
       userId,
       role: "assistant",
-      content: mayaResponse,
+      content: reply,
     });
 
-    return mayaResponse;
+    return reply;
   },
 });
