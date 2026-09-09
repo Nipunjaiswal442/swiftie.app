@@ -108,10 +108,10 @@ export const saveMessage = internalMutation({
 //   NVIDIA_API_KEY   required  — "nvapi-…" key from build.nvidia.com
 //   NVIDIA_MODEL     optional  — defaults to DEFAULT_MODEL below
 //
-// NVIDIA model ids are "vendor/model" (e.g. "deepseek-ai/deepseek-v4-flash").
-// A bare id such as "deepseek-v4-flash-0731" is normalised in resolveModelCandidates.
+// NVIDIA model ids are "vendor/model" (e.g. "nvidia/nemotron-3-ultra-550b-a55b").
+// A bare id such as "nemotron-3-ultra-550b-a55b" is normalised in resolveModelCandidates.
 const NVIDIA_CHAT_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
-const DEFAULT_MODEL = "deepseek-ai/deepseek-v4-flash";
+const DEFAULT_MODEL = "nvidia/nemotron-3-ultra-550b-a55b";
 const REQUEST_TIMEOUT_MS = 90_000;
 const MAX_TOKENS = 1024;
 
@@ -159,8 +159,9 @@ export function resolveModelCandidates(raw: string | undefined): string[] {
   return Array.from(new Set(candidates));
 }
 
-function isDeepSeek(model: string): boolean {
-  return model.toLowerCase().includes("deepseek");
+/** Models whose NIM chat template exposes a thinking/reasoning toggle. */
+function hasThinkingToggle(model: string): boolean {
+  return /deepseek|nemotron/i.test(model);
 }
 
 function buildRequestBody(model: string, messages: Array<{ role: string; content: string }>) {
@@ -172,15 +173,15 @@ function buildRequestBody(model: string, messages: Array<{ role: string; content
     top_p: 0.95,
     stream: false,
   };
-  if (isDeepSeek(model)) {
-    // DeepSeek V3.1 / V4 on NVIDIA NIM select "thinking" mode through
-    // chat_template_kwargs. Maya is a persona chat, so thinking is switched off:
-    // it keeps replies fast, avoids the endpoint stalling when the flag is
-    // absent, and stops reasoning tokens from eating the whole max_tokens budget
-    // (which surfaces as an empty `content`). Both spellings are sent because
-    // NVIDIA's examples use `thinking` while the upstream template uses
-    // `enable_thinking`; unknown template kwargs are ignored.
-    body.chat_template_kwargs = { thinking: false, enable_thinking: false };
+  if (hasThinkingToggle(model)) {
+    // Nemotron 3 and DeepSeek V3.1 / V4 on NVIDIA NIM select "thinking" mode
+    // through chat_template_kwargs. Maya is a persona chat, so thinking is
+    // switched off: it keeps replies fast, avoids the endpoint stalling when
+    // the flag is absent, and stops reasoning tokens from eating the whole
+    // max_tokens budget (which surfaces as an empty `content`). Nemotron uses
+    // `enable_thinking`, NVIDIA's DeepSeek examples use `thinking`; unknown
+    // template kwargs are ignored, so both are sent.
+    body.chat_template_kwargs = { enable_thinking: false, thinking: false };
   }
   return body;
 }
@@ -227,7 +228,8 @@ export function extractReply(data: ChatCompletion): string {
 
 /**
  * Call NVIDIA NIM, walking the candidate list on 404 (model not enabled for this
- * account). Any other failure is surfaced immediately with the upstream detail.
+ * account) or 410 (model reached end of life). Any other failure is surfaced
+ * immediately with the upstream detail.
  */
 async function askNvidia(
   apiKey: string,
@@ -251,10 +253,12 @@ async function askNvidia(
       REQUEST_TIMEOUT_MS
     );
 
-    if (response.status === 404) {
+    if (response.status === 404 || response.status === 410) {
       const detail = await response.text();
-      console.warn(`[maya] model "${model}" not available (404): ${detail.slice(0, 200)}`);
-      unavailable.push(model);
+      console.warn(
+        `[maya] model "${model}" not available (${response.status}): ${detail.slice(0, 200)}`
+      );
+      unavailable.push(`${model} (${response.status})`);
       continue;
     }
 
@@ -281,8 +285,8 @@ async function askNvidia(
   }
 
   throw new Error(
-    `None of the configured NVIDIA models are enabled for this API key: ${unavailable.join(", ")}. ` +
-      `Set NVIDIA_MODEL in the Convex dashboard to a model listed at build.nvidia.com.`
+    `None of the configured NVIDIA models are available for this API key: ${unavailable.join(", ")}. ` +
+      `Set NVIDIA_MODEL in the Convex dashboard to a current model listed at build.nvidia.com.`
   );
 }
 

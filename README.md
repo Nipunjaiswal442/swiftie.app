@@ -10,7 +10,7 @@
   <img src="https://img.shields.io/badge/language-TypeScript%205-3178C6" alt="TypeScript"/>
   <img src="https://img.shields.io/badge/backend-Convex-EE342F" alt="Convex"/>
   <img src="https://img.shields.io/badge/auth-Firebase%20Google%20Sign--In-FFCA28" alt="Firebase Auth"/>
-  <img src="https://img.shields.io/badge/AI-NVIDIA%20NIM%20%2B%20DeepSeek%20V4-76B900" alt="NVIDIA NIM"/>
+  <img src="https://img.shields.io/badge/AI-NVIDIA%20NIM%20%2B%20Nemotron%203%20Ultra-76B900" alt="NVIDIA NIM"/>
   <img src="https://img.shields.io/badge/deploy-Vercel-000000" alt="Vercel"/>
   <img src="https://img.shields.io/badge/status-Beta-orange" alt="Status"/>
 </p>
@@ -89,7 +89,7 @@ have to operate yourself.
                                 ┌────────────────────────────────────────┐
                                 │  NVIDIA NIM  integrate.api.nvidia.com  │
                                 │  OpenAI-compatible chat completions    │
-                                │  default model: deepseek-ai/deepseek-v4-flash │
+                                │  default model: nvidia/nemotron-3-ultra-550b-a55b │
                                 └────────────────────────────────────────┘
 ```
 
@@ -186,7 +186,7 @@ In the Convex dashboard for the deployment, open **Settings → Environment Vari
 | Variable | Required | Example |
 |----------|----------|---------|
 | `NVIDIA_API_KEY` | yes, for Maya | `nvapi-xxxxxxxx` |
-| `NVIDIA_MODEL` | no | `deepseek-ai/deepseek-v4-flash` |
+| `NVIDIA_MODEL` | no | `nvidia/nemotron-3-ultra-550b-a55b` |
 
 Update the Firebase project id in `web/convex/auth.config.js` if you are not using the
 original Firebase project.
@@ -213,7 +213,7 @@ It creates the built-in personality / ideology / occupation communities that ass
 | Variable | Purpose |
 |----------|---------|
 | `NVIDIA_API_KEY` | Bearer token for `integrate.api.nvidia.com`. Required for Maya |
-| `NVIDIA_MODEL` | Model id for Maya. Optional; defaults to `deepseek-ai/deepseek-v4-flash` |
+| `NVIDIA_MODEL` | Model id for Maya. Optional; defaults to `nvidia/nemotron-3-ultra-550b-a55b` |
 
 > Never commit `.env` files. The NVIDIA key lives only in Convex, so it is never shipped to the browser.
 
@@ -236,22 +236,23 @@ Set `NVIDIA_MODEL` in the Convex dashboard. Any chat model on
 
 | You type | Sent to NVIDIA |
 |----------|----------------|
-| *(unset)* | `deepseek-ai/deepseek-v4-flash` |
-| `deepseek-ai/deepseek-v4-flash` | `deepseek-ai/deepseek-v4-flash` |
-| `deepseek-v4-flash-0731` | `deepseek-ai/deepseek-v4-flash-0731`, then `deepseek-ai/deepseek-v4-flash` if NVIDIA answers 404 |
+| *(unset)* | `nvidia/nemotron-3-ultra-550b-a55b` |
+| `nvidia/nemotron-3-ultra-550b-a55b` | `nvidia/nemotron-3-ultra-550b-a55b` |
+| `nemotron-3-ultra-550b-a55b` | `nvidia/nemotron-3-ultra-550b-a55b` |
+| `deepseek-v4-flash-0731` | `deepseek-ai/deepseek-v4-flash-0731`, then `deepseek-ai/deepseek-v4-flash`, then the default |
 | `gemma-4-31b-it` | `google/gemma-4-31b-it` |
 
-Bare ids get the vendor prefix added automatically. If NVIDIA returns **404** for a model
-(dated snapshots such as `-0731` are only enabled for some accounts), the action tries the
-un-dated id and finally the default model before giving up, and logs each attempt in the
-Convex dashboard **Logs** tab.
+Bare ids get the vendor prefix added automatically. If NVIDIA returns **404** (model not
+enabled for the account; dated snapshots such as `-0731` often are not) or **410** (model
+reached end of life), the action tries the un-dated id and finally the default model before
+giving up, and logs each attempt in the Convex dashboard **Logs** tab.
 
-### DeepSeek specifics
+### Reasoning models (Nemotron 3, DeepSeek)
 
-DeepSeek V3.1 / V4 on NIM expose a "thinking" mode via `chat_template_kwargs`. Maya sends it
-switched **off**: replies come back faster, the endpoint does not stall waiting for a reasoning
-budget, and reasoning tokens cannot consume the whole `max_tokens` allowance and leave the
-answer empty. Any `<think>…</think>` block that still appears in the content is stripped.
+Nemotron 3 and DeepSeek V3.1 / V4 on NIM expose a "thinking" mode via `chat_template_kwargs`.
+Maya sends it switched **off**: replies come back faster, the endpoint does not stall waiting
+for a reasoning budget, and reasoning tokens cannot consume the whole `max_tokens` allowance and
+leave the answer empty. Any `<think>…</think>` block that still appears in the content is stripped.
 
 Requests time out after 90 seconds so a stalled upstream never leaves the chat spinner running forever.
 
@@ -313,7 +314,7 @@ at runtime.
 |---------|--------------|-----|
 | Maya shows the typing dots and then an error `NVIDIA_API_KEY is not set` | Key missing in Convex | Add `NVIDIA_API_KEY` in the Convex dashboard for the **same deployment** the site uses (dev vs prod) |
 | `NVIDIA API rejected the key (401)` | Wrong or expired key, or pasted with quotes/spaces | Generate a new key at build.nvidia.com and paste only the `nvapi-…` value |
-| `None of the configured NVIDIA models are enabled for this API key` | `NVIDIA_MODEL` points at a model your account cannot call | Use an id shown on build.nvidia.com, e.g. `deepseek-ai/deepseek-v4-flash` |
+| `None of the configured NVIDIA models are available for this API key` | `NVIDIA_MODEL` points at a model your account cannot call (404) or one NVIDIA has retired (410) | Use a current id shown on build.nvidia.com, e.g. `nvidia/nemotron-3-ultra-550b-a55b` |
 | Maya never answers, no error for a long time | Upstream stall | The action now aborts after 90 s with a visible error. Check the Convex **Logs** tab for the model used and the upstream response |
 | `Maya returned an empty response` | Model produced only reasoning or hit the token limit | Retry; if it persists with a custom model, switch to the default model |
 | Nothing loads after login | `VITE_CONVEX_URL` points at a different deployment than the one `convex deploy` pushed to | Align the URL and deploy key, then rebuild |
@@ -327,7 +328,7 @@ at runtime.
 |------|--------|
 | Assessments, auto-matched communities, group chats, discussion boards | ✅ Shipped |
 | Personal feed, profiles, follows, private DMs | ✅ Shipped |
-| Maya AI companion on NVIDIA NIM (DeepSeek V4 Flash) | ✅ Shipped |
+| Maya AI companion on NVIDIA NIM (Nemotron 3 Ultra) | ✅ Shipped |
 | Apply-to-join and user-created communities | ✅ Shipped |
 | Streaming Maya replies | 🔄 Planned |
 | Push notifications | 🔄 Planned |
