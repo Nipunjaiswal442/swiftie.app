@@ -41,11 +41,11 @@ export default function Explore() {
           gap: 10px;
           margin: 28px 0 14px;
           padding-bottom: 10px;
-          border-bottom: 1px solid rgba(255,255,255,0.05);
+          border-bottom: 1px solid rgba(var(--fg-rgb),0.05);
         }
         .explore-section-label {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 10px;
+          font-family: var(--font-mono);
+          font-size: calc(10px * var(--font-scale, 1));
           letter-spacing: 3px;
           color: var(--text-dim);
         }
@@ -60,14 +60,14 @@ export default function Explore() {
           flex-direction: column;
           gap: 10px;
           padding: 16px;
-          background: rgba(13,13,26,0.5);
-          border: 1px solid rgba(255,255,255,0.06);
+          background: rgba(var(--surface-rgb),0.5);
+          border: 1px solid rgba(var(--fg-rgb),0.06);
           clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
           transition: border-color 0.2s, background 0.2s;
         }
         .explore-community-card:hover {
-          background: rgba(13,13,26,0.8);
-          border-color: rgba(255,153,51,0.15);
+          background: rgba(var(--surface-rgb),0.8);
+          border-color: rgba(var(--accent-rgb),0.15);
         }
         .explore-card-top {
           display: flex;
@@ -81,29 +81,29 @@ export default function Explore() {
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 20px;
+          font-size: calc(20px * var(--font-scale, 1));
           flex-shrink: 0;
-          background: rgba(255,153,51,0.06);
-          border: 1px solid rgba(255,153,51,0.15);
+          background: rgba(var(--accent-rgb),0.06);
+          border: 1px solid rgba(var(--accent-rgb),0.15);
         }
         .explore-card-name {
-          font-family: 'Orbitron', sans-serif;
-          font-size: 11px;
+          font-family: var(--font-display);
+          font-size: calc(11px * var(--font-scale, 1));
           font-weight: 600;
           letter-spacing: 2px;
           color: var(--neon-white);
           margin-bottom: 4px;
         }
         .explore-card-meta {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 9px;
+          font-family: var(--font-mono);
+          font-size: calc(9px * var(--font-scale, 1));
           letter-spacing: 1px;
           color: var(--text-dim);
         }
         .explore-card-desc {
-          font-family: 'Rajdhani', sans-serif;
-          font-size: 13px;
-          color: rgba(224,224,255,0.55);
+          font-family: var(--font-body);
+          font-size: calc(13px * var(--font-scale, 1));
+          color: rgba(var(--text-rgb),0.55);
           line-height: 1.45;
           display: -webkit-box;
           -webkit-line-clamp: 2;
@@ -112,9 +112,9 @@ export default function Explore() {
         }
         .explore-apply-btn {
           align-self: flex-end;
-          font-family: 'Orbitron', sans-serif;
+          font-family: var(--font-display);
           font-weight: 600;
-          font-size: 9px;
+          font-size: calc(9px * var(--font-scale, 1));
           letter-spacing: 2px;
           padding: 7px 16px;
           background: transparent;
@@ -128,8 +128,8 @@ export default function Explore() {
         .explore-apply-btn:hover { opacity: 0.8; }
         .explore-empty {
           padding: '16px';
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 10px;
+          font-family: var(--font-mono);
+          font-size: calc(10px * var(--font-scale, 1));
           letter-spacing: 1.5px;
           color: var(--text-dim);
         }
@@ -142,10 +142,10 @@ export default function Explore() {
 
       <div style={{
         padding: '10px 16px', marginBottom: '8px',
-        background: 'rgba(0,255,65,0.04)',
-        border: '1px solid rgba(0,255,65,0.12)',
-        fontFamily: "'Share Tech Mono'", fontSize: '11px',
-        letterSpacing: '1.5px', color: 'rgba(0,255,65,0.65)',
+        background: 'rgba(var(--accent2-rgb),0.04)',
+        border: '1px solid rgba(var(--accent2-rgb),0.12)',
+        fontFamily: "var(--font-mono)", fontSize: 'calc(11px * var(--font-scale, 1))',
+        letterSpacing: '1.5px', color: 'rgba(var(--accent2-rgb),0.65)',
       }}>
         Communities you haven't joined yet — apply to explore new perspectives.
       </div>
@@ -161,7 +161,7 @@ export default function Explore() {
           return (
             <div key={section}>
               <div className="explore-section-header">
-                <span style={{ fontSize: '16px' }}>{icon}</span>
+                <span style={{ fontSize: 'calc(16px * var(--font-scale, 1))' }}>{icon}</span>
                 <span className="explore-section-label" style={{ color }}>// {label}</span>
               </div>
               {list.length === 0 ? (

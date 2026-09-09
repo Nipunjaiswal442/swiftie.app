@@ -1,7 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
+import type { Id } from '../../convex/_generated/dataModel'
+import CommentsPanel from '../components/CommentsPanel'
+import ReportButton from '../components/ReportModal'
+import { errorMessage, timeAgo } from '../lib/format'
 
 export default function CommunityPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -20,7 +24,10 @@ export default function CommunityPage() {
   const createPost = useMutation(api.communityPosts.create)
   const likePost = useMutation(api.communityPosts.like)
   const unlikePost = useMutation(api.communityPosts.unlike)
+  const removePost = useMutation(api.communityPosts.remove)
 
+  const [openComments, setOpenComments] = useState<Set<string>>(() => new Set())
+  const [actionError, setActionError] = useState<string | null>(null)
   const [postContent, setPostContent] = useState('')
   const [posting, setPosting] = useState(false)
   const [postError, setPostError] = useState<string | null>(null)
@@ -35,7 +42,7 @@ export default function CommunityPage() {
 
   if (community === undefined) {
     return (
-      <div style={{ padding: '60px', textAlign: 'center', fontFamily: "'Share Tech Mono', monospace", color: 'var(--text-dim)', letterSpacing: '2px' }}>
+      <div style={{ padding: '60px', textAlign: 'center', fontFamily: "var(--font-mono)", color: 'var(--text-dim)', letterSpacing: '2px' }}>
         LOADING...
       </div>
     )
@@ -44,7 +51,7 @@ export default function CommunityPage() {
   if (community === null) {
     return (
       <div style={{ padding: '60px', textAlign: 'center' }}>
-        <p style={{ fontFamily: "'Orbitron', sans-serif", color: 'var(--saffron)', letterSpacing: '4px', marginBottom: '16px' }}>COMMUNITY NOT FOUND</p>
+        <p style={{ fontFamily: "var(--font-display)", color: 'var(--saffron)', letterSpacing: '4px', marginBottom: '16px' }}>COMMUNITY NOT FOUND</p>
         <button onClick={() => navigate('/discover')} className="back-btn-community">← DISCOVER</button>
       </div>
     )
@@ -85,6 +92,24 @@ export default function CommunityPage() {
     }
   }
 
+  const toggleComments = (postId: Id<'communityPosts'>) => {
+    setOpenComments((prev) => {
+      const next = new Set(prev)
+      if (next.has(postId)) next.delete(postId)
+      else next.add(postId)
+      return next
+    })
+  }
+
+  const handleDelete = async (postId: Id<'communityPosts'>) => {
+    if (!window.confirm('Delete this post? Its likes and comments go with it.')) return
+    try {
+      await removePost({ postId })
+    } catch (err) {
+      setActionError(errorMessage(err))
+    }
+  }
+
   return (
     <div className="community-page">
       <style>{`
@@ -94,8 +119,8 @@ export default function CommunityPage() {
           padding: 40px 24px 80px;
         }
         .back-btn-community {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 11px;
+          font-family: var(--font-mono);
+          font-size: calc(11px * var(--font-scale, 1));
           letter-spacing: 3px;
           color: var(--text-dim);
           background: transparent;
@@ -112,8 +137,8 @@ export default function CommunityPage() {
         .back-btn-community:hover { color: var(--saffron); }
         .community-header {
           padding: 28px 24px;
-          background: rgba(13,13,26,0.7);
-          border: 1px solid rgba(255,153,51,0.15);
+          background: rgba(var(--surface-rgb),0.7);
+          border: 1px solid rgba(var(--accent-rgb),0.15);
           margin-bottom: 32px;
           clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
         }
@@ -123,33 +148,33 @@ export default function CommunityPage() {
           gap: 16px;
           margin-bottom: 16px;
         }
-        .community-header-icon { font-size: 40px; flex-shrink: 0; }
+        .community-header-icon { font-size: calc(40px * var(--font-scale, 1)); flex-shrink: 0; }
         .community-header-info { flex: 1; }
         .community-header-section {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 10px;
+          font-family: var(--font-mono);
+          font-size: calc(10px * var(--font-scale, 1));
           letter-spacing: 3px;
           color: var(--text-dim);
           text-transform: uppercase;
           margin-bottom: 6px;
         }
         .community-header-name {
-          font-family: 'Orbitron', sans-serif;
+          font-family: var(--font-display);
           font-weight: 700;
-          font-size: clamp(16px, 2.5vw, 22px);
+          font-size: calc(clamp(16px, 2.5vw, 22px) * var(--font-scale, 1));
           letter-spacing: 3px;
           margin: 0 0 6px;
         }
         .community-header-members {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 11px;
+          font-family: var(--font-mono);
+          font-size: calc(11px * var(--font-scale, 1));
           letter-spacing: 1px;
           color: var(--text-dim);
         }
         .community-header-desc {
-          font-family: 'Rajdhani', sans-serif;
-          font-size: 14px;
-          color: rgba(224,224,255,0.5);
+          font-family: var(--font-body);
+          font-size: calc(14px * var(--font-scale, 1));
+          color: rgba(var(--text-rgb),0.5);
           line-height: 1.6;
           margin-bottom: 16px;
         }
@@ -161,9 +186,9 @@ export default function CommunityPage() {
         .btn-join-community,
         .btn-leave-community {
           padding: 8px 24px;
-          font-family: 'Orbitron', sans-serif;
+          font-family: var(--font-display);
           font-weight: 600;
-          font-size: 11px;
+          font-size: calc(11px * var(--font-scale, 1));
           letter-spacing: 3px;
           text-transform: uppercase;
           border: none;
@@ -172,13 +197,13 @@ export default function CommunityPage() {
           clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
         }
         .btn-join-community {
-          color: var(--bg-dark);
+          color: var(--on-accent);
         }
         .btn-join-community:hover { opacity: 0.85; transform: translateY(-1px); }
         .btn-leave-community {
           background: transparent;
           color: var(--text-dim);
-          border: 1px solid rgba(255,255,255,0.1);
+          border: 1px solid rgba(var(--fg-rgb),0.1);
           clip-path: none;
         }
         .btn-leave-community:hover { color: #ff6b6b; border-color: rgba(255,107,107,0.3); }
@@ -186,31 +211,31 @@ export default function CommunityPage() {
         /* Feed */
         .feed-section { margin-bottom: 32px; }
         .feed-label {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 10px;
+          font-family: var(--font-mono);
+          font-size: calc(10px * var(--font-scale, 1));
           letter-spacing: 3px;
           color: var(--text-dim);
           text-transform: uppercase;
           margin-bottom: 16px;
           padding-bottom: 8px;
-          border-bottom: 1px solid rgba(255,255,255,0.05);
+          border-bottom: 1px solid rgba(var(--fg-rgb),0.05);
         }
         .feed-empty {
           padding: 40px 0;
           text-align: center;
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 11px;
+          font-family: var(--font-mono);
+          font-size: calc(11px * var(--font-scale, 1));
           color: var(--text-dim);
           letter-spacing: 2px;
         }
         .feed-posts { display: flex; flex-direction: column; gap: 16px; }
         .post-card {
           padding: 20px;
-          background: rgba(13,13,26,0.5);
-          border: 1px solid rgba(255,255,255,0.06);
+          background: rgba(var(--surface-rgb),0.5);
+          border: 1px solid rgba(var(--fg-rgb),0.06);
           transition: border-color 0.3s;
         }
-        .post-card:hover { border-color: rgba(255,153,51,0.12); }
+        .post-card:hover { border-color: rgba(var(--accent-rgb),0.12); }
         .post-meta {
           display: flex;
           align-items: center;
@@ -221,26 +246,26 @@ export default function CommunityPage() {
           width: 28px;
           height: 28px;
           border-radius: 50%;
-          background: rgba(255,153,51,0.15);
-          border: 1px solid rgba(255,153,51,0.3);
+          background: rgba(var(--accent-rgb),0.15);
+          border: 1px solid rgba(var(--accent-rgb),0.3);
           display: flex;
           align-items: center;
           justify-content: center;
-          font-family: 'Orbitron', sans-serif;
-          font-size: 11px;
+          font-family: var(--font-display);
+          font-size: calc(11px * var(--font-scale, 1));
           color: var(--saffron);
           flex-shrink: 0;
         }
         .post-author {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 11px;
+          font-family: var(--font-mono);
+          font-size: calc(11px * var(--font-scale, 1));
           letter-spacing: 1px;
           color: var(--neon-white);
         }
         .post-content {
-          font-family: 'Rajdhani', sans-serif;
-          font-size: 15px;
-          color: rgba(224,224,255,0.8);
+          font-family: var(--font-body);
+          font-size: calc(15px * var(--font-scale, 1));
+          color: rgba(var(--text-rgb),0.8);
           line-height: 1.6;
           margin-bottom: 12px;
           white-space: pre-wrap;
@@ -253,10 +278,10 @@ export default function CommunityPage() {
         }
         .post-like-btn {
           background: transparent;
-          border: 1px solid rgba(255,255,255,0.08);
+          border: 1px solid rgba(var(--fg-rgb),0.08);
           color: var(--text-dim);
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 10px;
+          font-family: var(--font-mono);
+          font-size: calc(10px * var(--font-scale, 1));
           letter-spacing: 1px;
           padding: 4px 12px;
           cursor: pointer;
@@ -265,37 +290,37 @@ export default function CommunityPage() {
           align-items: center;
           gap: 6px;
         }
-        .post-like-btn:hover { border-color: rgba(255,153,51,0.4); color: var(--saffron); }
-        .post-like-btn.liked { color: var(--saffron); border-color: rgba(255,153,51,0.3); }
+        .post-like-btn:hover { border-color: rgba(var(--accent-rgb),0.4); color: var(--saffron); }
+        .post-like-btn.liked { color: var(--saffron); border-color: rgba(var(--accent-rgb),0.3); }
 
         /* Composer */
         .composer-section { margin-top: 32px; }
         .composer-label {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 10px;
+          font-family: var(--font-mono);
+          font-size: calc(10px * var(--font-scale, 1));
           letter-spacing: 3px;
           color: var(--text-dim);
           text-transform: uppercase;
           margin-bottom: 12px;
           padding-bottom: 8px;
-          border-bottom: 1px solid rgba(255,255,255,0.05);
+          border-bottom: 1px solid rgba(var(--fg-rgb),0.05);
         }
         .composer-textarea {
           width: 100%;
           min-height: 100px;
           padding: 16px;
-          background: rgba(13,13,26,0.7);
-          border: 1px solid rgba(255,153,51,0.15);
+          background: rgba(var(--surface-rgb),0.7);
+          border: 1px solid rgba(var(--accent-rgb),0.15);
           color: var(--neon-white);
-          font-family: 'Rajdhani', sans-serif;
-          font-size: 15px;
+          font-family: var(--font-body);
+          font-size: calc(15px * var(--font-scale, 1));
           line-height: 1.5;
           resize: vertical;
           outline: none;
           transition: border-color 0.3s;
           box-sizing: border-box;
         }
-        .composer-textarea:focus { border-color: rgba(255,153,51,0.4); }
+        .composer-textarea:focus { border-color: rgba(var(--accent-rgb),0.4); }
         .composer-textarea::placeholder { color: var(--text-dim); }
         .composer-footer {
           display: flex;
@@ -306,23 +331,23 @@ export default function CommunityPage() {
           gap: 8px;
         }
         .composer-hint {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 10px;
+          font-family: var(--font-mono);
+          font-size: calc(10px * var(--font-scale, 1));
           letter-spacing: 1px;
           color: var(--text-dim);
         }
         .composer-error {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 11px;
+          font-family: var(--font-mono);
+          font-size: calc(11px * var(--font-scale, 1));
           color: #ff4444;
           width: 100%;
           margin-bottom: 6px;
         }
         .composer-submit {
           padding: 10px 28px;
-          font-family: 'Orbitron', sans-serif;
+          font-family: var(--font-display);
           font-weight: 600;
-          font-size: 11px;
+          font-size: calc(11px * var(--font-scale, 1));
           letter-spacing: 3px;
           text-transform: uppercase;
           border: none;
@@ -334,11 +359,11 @@ export default function CommunityPage() {
         .composer-submit:not(:disabled):hover { opacity: 0.85; transform: translateY(-1px); }
         .non-member-notice {
           padding: 20px;
-          background: rgba(13,13,26,0.4);
-          border: 1px dashed rgba(255,255,255,0.08);
+          background: rgba(var(--surface-rgb),0.4);
+          border: 1px dashed rgba(var(--fg-rgb),0.08);
           text-align: center;
-          font-family: 'Rajdhani', sans-serif;
-          font-size: 14px;
+          font-family: var(--font-body);
+          font-size: calc(14px * var(--font-scale, 1));
           color: var(--text-dim);
           line-height: 1.5;
         }
@@ -372,7 +397,7 @@ export default function CommunityPage() {
           ) : (
             <button
               className="btn-join-community"
-              style={{ background: sectionColor === 'var(--white-pure)' ? 'rgba(255,255,255,0.9)' : sectionColor, color: 'var(--bg-dark)' }}
+              style={{ background: sectionColor === 'var(--white-pure)' ? 'rgba(var(--fg-rgb),0.9)' : sectionColor, color: 'var(--on-accent)' }}
               onClick={handleJoin}
             >
               JOIN COMMUNITY
@@ -398,7 +423,7 @@ export default function CommunityPage() {
             <span className="composer-hint">⌘ + Enter to post · {2000 - postContent.length} chars left</span>
             <button
               className="composer-submit"
-              style={{ background: sectionColor === 'var(--white-pure)' ? 'rgba(255,255,255,0.9)' : sectionColor, color: 'var(--bg-dark)' }}
+              style={{ background: sectionColor === 'var(--white-pure)' ? 'rgba(var(--fg-rgb),0.9)' : sectionColor, color: 'var(--on-accent)' }}
               onClick={handlePost}
               disabled={posting || !postContent.trim()}
             >
@@ -428,15 +453,27 @@ export default function CommunityPage() {
             )}
             {feed && feed.length > 0 && (
               <div className="feed-posts">
+                {actionError && <p className="composer-error">{actionError}</p>}
                 {[...feed].reverse().map((post) => (
                   <div key={post._id} className="post-card">
                     <div className="post-meta">
                       <div className="post-avatar">
                         {(post.author.displayName ?? 'U')[0].toUpperCase()}
                       </div>
-                      <span className="post-author">
-                        {post.author.username ? `@${post.author.username}` : post.author.displayName}
-                      </span>
+                      {post.author.username ? (
+                        <Link to={`/profile/${post.author.username}`} className="post-author" style={{ textDecoration: 'none' }}>
+                          @{post.author.username}
+                        </Link>
+                      ) : (
+                        <span className="post-author">{post.author.displayName}</span>
+                      )}
+                      <span className="composer-hint">{timeAgo(post._creationTime)}</span>
+                      <span style={{ flex: 1 }} />
+                      {post.isMine ? (
+                        <button className="ghost-btn danger" onClick={() => handleDelete(post._id)}>✕ DELETE</button>
+                      ) : (
+                        <ReportButton targetType="communityPost" targetId={post._id} targetLabel={post.author.username ? `post by @${post.author.username}` : undefined} />
+                      )}
                     </div>
                     <p className="post-content">{post.content}</p>
                     <div className="post-actions">
@@ -449,7 +486,16 @@ export default function CommunityPage() {
                       >
                         {post.isLikedByMe ? '♥' : '♡'} {post.likesCount}
                       </button>
+                      <button
+                        className={`post-like-btn${openComments.has(post._id) ? ' liked' : ''}`}
+                        onClick={() => toggleComments(post._id)}
+                      >
+                        💬 {post.commentsCount} COMMENT{post.commentsCount === 1 ? '' : 'S'}
+                      </button>
                     </div>
+                    {openComments.has(post._id) && (
+                      <CommentsPanel postId={post._id} canComment={!!isMember} />
+                    )}
                   </div>
                 ))}
                 <div ref={feedEndRef} />

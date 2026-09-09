@@ -22,6 +22,20 @@ export default defineSchema({
     personalityResult: v.optional(v.string()), // e.g. "ENFP"
     ideologyResult:    v.optional(v.string()), // e.g. "progressive"
     occupationResult:  v.optional(v.string()), // e.g. "tech"
+    // Account regulation (admin console)
+    status:            v.optional(v.union(v.literal("active"), v.literal("suspended"))),
+    suspendedReason:   v.optional(v.string()),
+    suspendedAt:       v.optional(v.number()),
+    // Appearance preferences (Settings → Appearance); mirrored in localStorage on the client
+    prefs: v.optional(
+      v.object({
+        palette:      v.optional(v.string()),  // "tricolour" | "cyan" | "magenta" | "amber" | "mono" | "light"
+        fontScale:    v.optional(v.string()),  // "small" | "medium" | "large" | "xlarge"
+        fontFamily:   v.optional(v.string()),  // "cyber" | "readable" | "mono"
+        reduceMotion: v.optional(v.boolean()),
+      })
+    ),
+    profileCompletedAt: v.optional(v.number()),
   })
     .index("by_token", ["tokenIdentifier"])
     .index("by_username", ["username"])
@@ -48,7 +62,30 @@ export default defineSchema({
     userId: v.id("users"),
   })
     .index("by_post", ["postId"])
-    .index("by_post_and_user", ["postId", "userId"]),
+    .index("by_post_and_user", ["postId", "userId"])
+    .index("by_user", ["userId"]),
+
+  // Comments on personal-feed posts AND community discussion posts.
+  // `parentId` threads replies one level deep under a top-level comment.
+  comments: defineTable({
+    postId: v.union(v.id("posts"), v.id("communityPosts")),
+    parentId: v.optional(v.id("comments")),
+    authorId: v.id("users"),
+    content: v.string(),
+    likesCount: v.number(),
+    repliesCount: v.number(),
+  })
+    .index("by_post", ["postId"])
+    .index("by_parent", ["parentId"])
+    .index("by_author", ["authorId"]),
+
+  commentLikes: defineTable({
+    commentId: v.id("comments"),
+    userId: v.id("users"),
+  })
+    .index("by_comment", ["commentId"])
+    .index("by_comment_and_user", ["commentId", "userId"])
+    .index("by_user", ["userId"]),
 
   conversations: defineTable({
     participantIds: v.array(v.id("users")),
@@ -126,13 +163,16 @@ export default defineSchema({
     userId: v.id("users"),
   })
     .index("by_post", ["postId"])
-    .index("by_post_and_user", ["postId", "userId"]),
+    .index("by_post_and_user", ["postId", "userId"])
+    .index("by_user", ["userId"]),
 
   communityMessages: defineTable({
     communityId: v.id("communities"),
     senderId: v.id("users"),
     content: v.string(),
-  }).index("by_community", ["communityId"]),
+  })
+    .index("by_community", ["communityId"])
+    .index("by_sender", ["senderId"]),
 
   communityApplications: defineTable({
     userId:      v.id("users"),
@@ -151,4 +191,75 @@ export default defineSchema({
     .index("by_user",               ["userId"])
     .index("by_user_and_community", ["userId", "communityId"])
     .index("by_status",             ["status"]),
+
+  // ─── Complaints, feature requests, bug reports and content/user reports ────
+  // Submitted from Settings → Help & Feedback, from the ⚑ Report buttons, or
+  // captured by Maya when a user complains / asks for something in chat.
+  feedback: defineTable({
+    userId:      v.id("users"),
+    type:        v.union(
+      v.literal("complaint"),
+      v.literal("request"),
+      v.literal("bug"),
+      v.literal("report"),
+      v.literal("other")
+    ),
+    source:      v.union(v.literal("form"), v.literal("report"), v.literal("maya")),
+    subject:     v.string(),
+    message:     v.string(),
+    targetType:  v.optional(
+      v.union(v.literal("user"), v.literal("post"), v.literal("communityPost"), v.literal("comment"))
+    ),
+    targetId:    v.optional(v.string()),
+    targetLabel: v.optional(v.string()),
+    status:      v.union(v.literal("open"), v.literal("resolved"), v.literal("dismissed")),
+    adminNote:   v.optional(v.string()),
+    resolvedAt:  v.optional(v.number()),
+  })
+    .index("by_user",   ["userId"])
+    .index("by_status", ["status"])
+    .index("by_source", ["source"]),
+
+  // ─── Admin console ─────────────────────────────────────────────────────────
+  // Admin logs in with ADMIN_ID / ADMIN_PASSWORD (Convex env vars), gets a
+  // random session token that every admin query/mutation validates.
+  adminSessions: defineTable({
+    token:      v.string(),
+    adminId:    v.string(),
+    expiresAt:  v.number(),
+    lastUsedAt: v.optional(v.number()),
+  }).index("by_token", ["token"]),
+
+  // Failed-login throttle (single row, key = "admin")
+  adminLoginThrottle: defineTable({
+    key:         v.string(),
+    failures:    v.number(),
+    windowStart: v.number(),
+    lockedUntil: v.optional(v.number()),
+  }).index("by_key", ["key"]),
+
+  // Notifications shown in the admin console: Maya's daily digest of
+  // complaints/requests, plus instant pings for new reports and feedback.
+  adminNotifications: defineTable({
+    kind:        v.union(
+      v.literal("daily_digest"),
+      v.literal("report"),
+      v.literal("feedback"),
+      v.literal("system")
+    ),
+    title:       v.string(),
+    body:        v.string(),
+    readAt:      v.optional(v.number()),
+    periodStart: v.optional(v.number()),
+    periodEnd:   v.optional(v.number()),
+    stats:       v.optional(v.any()),
+    feedbackId:  v.optional(v.id("feedback")),
+  }).index("by_kind", ["kind"]),
+
+  adminAuditLog: defineTable({
+    adminId:      v.string(),
+    action:       v.string(),
+    targetUserId: v.optional(v.id("users")),
+    details:      v.optional(v.string()),
+  }),
 });

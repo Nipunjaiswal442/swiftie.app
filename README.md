@@ -59,8 +59,13 @@ and **Maya** — an always-online AI friend who chats with you and explains the 
 | **Discover & Explore** | Browse every community, see recommendations, apply to communities you did not match, or create your own |
 | **Community spaces** | Each community has a real-time group chat and a discussion board with posts and likes |
 | **Private DMs** | One-to-one conversations started from any profile, with read receipts |
-| **Feed & profiles** | Personal posts with photos and captions, likes, follow/unfollow, member rosters |
-| **Maya** | An AI companion (Maya Bora, a CSE student from Guwahati) powered by NVIDIA NIM. Remembers the conversation and doubles as an in-character help desk |
+| **Feed & profiles** | Personal posts with photos and captions, likes, threaded comments (reply, like, delete), follow/unfollow with followers/following lists, member rosters |
+| **Profile first** | The profile is created right after sign-in, before anything else. Every assessment result is added to it automatically: type badge, score breakdown and matched community |
+| **People on Swiftie** | A section on Discover listing everyone who has signed in, online members first, with search, filters and one-tap follow |
+| **Settings** | Colour palettes (Tricolour, Cyan Circuit, Magenta Pulse, Amber Terminal, Monochrome, Daylight), text size and font, reduced motion, profile & photo editing, Help & Feedback, delete account |
+| **Reports** | A ⚑ button on every post, comment and profile files a report for the admin |
+| **Maya** | An AI companion (Maya Bora, a CSE student from Guwahati) powered by NVIDIA NIM. Remembers the conversation, doubles as an in-character help desk, and notes complaints / feature requests users mention in chat |
+| **Admin console** | `/admin` — separate ID/password login. Account regulation (view, suspend, unsuspend, delete), report & feedback triage, content removal, audit log, and a daily round-up from Maya of complaints and requests |
 | **Real-time everywhere** | Every list in the UI is a reactive Convex query, so chats, feeds and counts update live without polling |
 
 ---
@@ -126,18 +131,27 @@ swiftie.app/
 │   │   ├── communities.ts       # Communities, membership, applications, seeding
 │   │   ├── communityPosts.ts    # Community discussion board
 │   │   ├── communityMessages.ts # Community group chats
-│   │   ├── assessments.ts       # Assessment results + auto-join
-│   │   ├── maya.ts              # Maya AI companion (NVIDIA NIM action)
+│   │   ├── assessments.ts       # Assessment results + auto-join + public results for profiles
+│   │   ├── comments.ts          # Comments + replies + comment likes (feed and community posts)
+│   │   ├── feedback.ts          # Complaints, requests, bug reports, ⚑ reports
+│   │   ├── maya.ts              # Maya AI companion (NVIDIA NIM action) + complaint capture
+│   │   ├── nvidia.ts            # Shared NVIDIA NIM client (model fallback, timeouts)
+│   │   ├── admin.ts             # Admin login/sessions, account regulation, triage, notifications
+│   │   ├── adminDigest.ts       # Maya's daily round-up for the admin (LLM, with template fallback)
+│   │   ├── crons.ts             # Daily digest schedule (09:00 IST)
+│   │   ├── helpers.ts           # Shared helpers: auth guards, presence, account purge
 │   │   └── _generated/          # Convex codegen (committed)
 │   └── src/
-│       ├── App.tsx              # Routes
+│       ├── App.tsx              # Routes + appearance sync + presence
+│       ├── appearance.ts        # Palette / text size / font / motion preferences
 │       ├── firebase.ts          # Firebase client init
 │       ├── useFirebaseAuth.ts   # Auth hook wiring Firebase → Convex
 │       ├── store/authStore.ts   # Zustand auth store
-│       ├── components/          # Nav, ProtectedRoute, UserAvatar
-│       ├── data/                # Assessment question banks
-│       ├── pages/               # One file per route (Feed, Chat, MayaChat, ...)
-│       └── theme.css            # Global neon/terminal theme
+│       ├── components/          # Nav, ProtectedRoute, PostCard, CommentsPanel, ProfileForm, ...
+│       ├── data/                # Assessment question banks + result labels
+│       ├── lib/                 # Formatting, admin session, session flags
+│       ├── pages/               # One file per route (Feed, Settings, AdminConsole, ...)
+│       └── theme.css            # Global theme: CSS variables, palettes, text settings
 └── server/                      # LEGACY Express backend (unused, reference only)
 ```
 
@@ -187,6 +201,8 @@ In the Convex dashboard for the deployment, open **Settings → Environment Vari
 |----------|----------|---------|
 | `NVIDIA_API_KEY` | yes, for Maya | `nvapi-xxxxxxxx` |
 | `NVIDIA_MODEL` | no | `nvidia/nemotron-3-ultra-550b-a55b` |
+| `ADMIN_PASSWORD` | yes, for the admin console | a long random string |
+| `ADMIN_ID` | no (defaults to `admin`) | `nipun` |
 
 Update the Firebase project id in `web/convex/auth.config.js` if you are not using the
 original Firebase project.
@@ -212,10 +228,12 @@ It creates the built-in personality / ideology / occupation communities that ass
 
 | Variable | Purpose |
 |----------|---------|
-| `NVIDIA_API_KEY` | Bearer token for `integrate.api.nvidia.com`. Required for Maya |
+| `NVIDIA_API_KEY` | Bearer token for `integrate.api.nvidia.com`. Required for Maya and for Maya's daily admin digest |
 | `NVIDIA_MODEL` | Model id for Maya. Optional; defaults to `nvidia/nemotron-3-ultra-550b-a55b` |
+| `ADMIN_PASSWORD` | Password for the admin console at `/admin`. Admin login is disabled until this is set |
+| `ADMIN_ID` | Admin login ID. Optional; defaults to `admin` |
 
-> Never commit `.env` files. The NVIDIA key lives only in Convex, so it is never shipped to the browser.
+> Never commit `.env` files. The NVIDIA key and admin credentials live only in Convex, so they are never shipped to the browser.
 
 ---
 
@@ -256,6 +274,38 @@ leave the answer empty. Any `<think>…</think>` block that still appears in the
 
 Requests time out after 90 seconds so a stalled upstream never leaves the chat spinner running forever.
 
+### Complaints and requests
+
+Maya knows the whole app (profiles, assessments, comments, People, Settings, reports) and answers
+in character. When a user complains, reports a bug or asks for a feature while chatting, a keyword
+heuristic in `maya.ts` files the message as `feedback` (source `maya`) — no extra model call — so it
+reaches the admin console. Users can also file feedback formally from **Settings → Help & Feedback**
+or with the ⚑ **Report** button on any post, comment or profile.
+
+### Maya's daily round-up for the admin
+
+`convex/crons.ts` runs `adminDigest.generateDailyDigest` every day at **09:00 IST** (03:30 UTC). It
+collects the last 24 hours of complaints, requests, bug reports and ⚑ reports plus activity numbers,
+asks NVIDIA NIM to write the summary in Maya's voice (urgent items first, grouped, with user handles
+and a "my take"), and stores it as an admin notification. If `NVIDIA_API_KEY` is missing or the call
+fails, a templated summary in Maya's voice is stored instead so the digest never goes missing. The
+admin can also press **Ask Maya for a round-up now** in the console.
+
+---
+
+## Admin console
+
+Open `/admin` (linked from the landing-page footer) and sign in with the ID/password configured in
+the Convex dashboard (`ADMIN_ID`, `ADMIN_PASSWORD`). This is independent of Google sign-in:
+
+- Login issues a random 12-hour session token (`adminSessions`) that every admin function validates.
+  Five failed attempts lock the login for 15 minutes; all admin actions are written to `adminAuditLog`.
+- **Overview** — accounts, online now, sign-ups, posts, comments, open reports/complaints/requests/bugs, unread Maya notifications, latest round-up.
+- **Accounts** — search and filter every account; view details (profile, assessments, communities, recent content, reports against them, feedback they sent); **suspend** with a reason (the user sees an "Access paused" screen and can appeal), **unsuspend**, or **delete** (purges everything the user created).
+- **Reports & feedback** — triage complaints, requests, bugs and ⚑ reports (from forms, reports, or things users told Maya): resolve/dismiss with a note the user can see, remove reported content, view or suspend the reported user.
+- **Maya** — daily round-ups and instant pings for new reports/feedback, with unread counts and an on-demand round-up button.
+- **Audit log** — the last 100 admin actions.
+
 ---
 
 ## Data model
@@ -276,6 +326,13 @@ All tables are declared in `web/convex/schema.ts`. Every document also carries C
 | `communityMessages` | `communityId`, `senderId`, `content` | Group chats |
 | `communityApplications` | `userId`, `communityId`, `answers`, `status` | Apply-to-join flow for unmatched communities |
 | `mayaMessages` | `userId`, `role` (`user` / `assistant`), `content` | Maya conversation history |
+| `comments`, `commentLikes` | `postId` (feed or community post), `parentId`, `authorId`, `content`, counters | Threaded comments on both kinds of post |
+| `feedback` | `userId`, `type` (`complaint` / `request` / `bug` / `report` / `other`), `source` (`form` / `report` / `maya`), `subject`, `message`, target, `status`, `adminNote` | Complaints, requests and reports |
+| `adminSessions`, `adminLoginThrottle` | `token`, `adminId`, `expiresAt` | Admin console sessions and brute-force throttle |
+| `adminNotifications` | `kind` (`daily_digest` / `report` / `feedback` / `system`), `title`, `body`, `readAt`, `stats` | Maya's round-ups and instant admin pings |
+| `adminAuditLog` | `adminId`, `action`, `targetUserId`, `details` | Every admin action |
+
+`users` also carries `status` (`active` / `suspended`), `suspendedReason`, `prefs` (palette, text size, font, motion) and `profileCompletedAt`.
 
 Access control is enforced inside each Convex function via `ctx.auth.getUserIdentity()`.
 
@@ -319,6 +376,8 @@ at runtime.
 | `Maya returned an empty response` | Model produced only reasoning or hit the token limit | Retry; if it persists with a custom model, switch to the default model |
 | Nothing loads after login | `VITE_CONVEX_URL` points at a different deployment than the one `convex deploy` pushed to | Align the URL and deploy key, then rebuild |
 | Communities page is empty | Seed not run | Run `communities:seedCommunities` from the Convex dashboard |
+| Admin login says "not configured" | `ADMIN_PASSWORD` missing | Add `ADMIN_PASSWORD` (and optionally `ADMIN_ID`) in the Convex dashboard for the deployment the site uses |
+| Maya's daily round-up reads like a plain list | NVIDIA call failed or key missing | The template fallback was used; check `NVIDIA_API_KEY` and the Convex **Logs** tab for `[adminDigest]` |
 
 ---
 
@@ -330,6 +389,9 @@ at runtime.
 | Personal feed, profiles, follows, private DMs | ✅ Shipped |
 | Maya AI companion on NVIDIA NIM (Nemotron 3 Ultra) | ✅ Shipped |
 | Apply-to-join and user-created communities | ✅ Shipped |
+| Comments & replies, People on Discover, follower lists, profile insights | ✅ Shipped |
+| Settings: palettes, text size, profile editing, delete account | ✅ Shipped |
+| Admin console with Maya's daily complaint/request digest | ✅ Shipped |
 | Streaming Maya replies | 🔄 Planned |
 | Push notifications | 🔄 Planned |
 | End-to-end encrypted DMs | 🔄 Planned |

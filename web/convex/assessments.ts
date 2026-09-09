@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { requireActiveUser } from "./helpers";
 
 const SECTION_ARG = v.union(
   v.literal("personality"),
@@ -17,14 +18,11 @@ export const completeAssessment = mutation({
     matchKey: v.string(),
   },
   handler: async (ctx, { section, scores, matchKey }) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.subject))
-      .unique();
-    if (!user) throw new Error("User not found");
+    const user = await requireActiveUser(ctx);
+    // Profiles are created before assessments so the result has somewhere to land.
+    if (!user.username) {
+      throw new Error("Set up your profile before taking an assessment");
+    }
 
     // 1. Upsert assessment result (one per section per user)
     const existing = await ctx.db
@@ -161,5 +159,39 @@ export const getMyAllResults = query({
       .query("assessmentResults")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
+  },
+});
+
+// ─── Public: results shown on a profile page ─────────────────────────────────
+// Every completed assessment is automatically part of the profile: the
+// matched type, the score breakdown, when it was completed and the community
+// the user was matched into.
+export const getResultsForUser = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, { userId }) => {
+    const results = await ctx.db
+      .query("assessmentResults")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+
+    return Promise.all(
+      results.map(async (r) => {
+        const candidates = await ctx.db
+          .query("communities")
+          .withIndex("by_match_key", (q) => q.eq("matchKey", r.matchKey))
+          .collect();
+        const community = candidates.find((c) => c.section === r.section) ?? null;
+        return {
+          _id: r._id,
+          section: r.section,
+          matchKey: r.matchKey,
+          scores: r.scores,
+          completedAt: r.completedAt,
+          community: community
+            ? { slug: community.slug, name: community.name, icon: community.icon }
+            : null,
+        };
+      })
+    );
   },
 });

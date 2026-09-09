@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { assertActive } from "./helpers";
 
 // Get all conversations for current user
 export const getConversations = query({
@@ -71,6 +72,10 @@ export const getOrCreateConversation = mutation({
       )
       .unique();
     if (!me) throw new Error("User not found");
+    assertActive(me);
+    if (otherUserId === me._id) throw new Error("You cannot message yourself");
+    const other = await ctx.db.get(otherUserId);
+    if (!other) throw new Error("User not found");
 
     // Find existing conversation
     const all = await ctx.db.query("conversations").collect();
@@ -126,6 +131,8 @@ export const send = mutation({
       )
       .unique();
     if (!me) throw new Error("User not found");
+    assertActive(me);
+    if (!content.trim()) throw new Error("Message is empty");
 
     const msgId = await ctx.db.insert("messages", {
       conversationId,

@@ -8,6 +8,25 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+    <script>
+      // Apply the saved appearance (palette / text size / font / motion) before
+      // the first paint so there is no flash of the default theme. Mirrors
+      // src/appearance.ts — keep the two in sync.
+      (function () {
+        try {
+          var raw = localStorage.getItem('swiftie.appearance');
+          var a = raw ? JSON.parse(raw) : {};
+          var root = document.documentElement;
+          var palettes = ['tricolour', 'cyan', 'magenta', 'amber', 'mono', 'light'];
+          var scales = ['small', 'medium', 'large', 'xlarge'];
+          var fonts = ['cyber', 'readable', 'mono'];
+          root.setAttribute('data-palette', palettes.indexOf(a.palette) >= 0 ? a.palette : 'tricolour');
+          root.setAttribute('data-font-scale', scales.indexOf(a.fontScale) >= 0 ? a.fontScale : 'medium');
+          root.setAttribute('data-font', fonts.indexOf(a.fontFamily) >= 0 ? a.fontFamily : 'cyber');
+          root.setAttribute('data-motion', a.reduceMotion === true ? 'reduced' : 'full');
+        } catch (e) { /* ignore */ }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

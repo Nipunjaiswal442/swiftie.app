@@ -77,7 +77,7 @@ export default function CommunityChatThread() {
 
   if (community === undefined) {
     return (
-      <div style={{ padding: '60px', textAlign: 'center', fontFamily: "'Share Tech Mono', monospace", color: 'var(--text-dim)', letterSpacing: '2px' }}>
+      <div style={{ padding: '60px', textAlign: 'center', fontFamily: "var(--font-mono)", color: 'var(--text-dim)', letterSpacing: '2px' }}>
         LOADING...
       </div>
     )
@@ -86,8 +86,8 @@ export default function CommunityChatThread() {
   if (community === null) {
     return (
       <div style={{ padding: '60px', textAlign: 'center' }}>
-        <p style={{ fontFamily: "'Orbitron', sans-serif", color: 'var(--saffron)', letterSpacing: '4px', marginBottom: '16px' }}>COMMUNITY NOT FOUND</p>
-        <button onClick={() => navigate('/chat')} style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: '11px', letterSpacing: '3px', color: 'var(--text-dim)', background: 'transparent', border: 'none', cursor: 'pointer' }}>← MESSAGES</button>
+        <p style={{ fontFamily: "var(--font-display)", color: 'var(--saffron)', letterSpacing: '4px', marginBottom: '16px' }}>COMMUNITY NOT FOUND</p>
+        <button onClick={() => navigate('/chat')} style={{ fontFamily: "var(--font-mono)", fontSize: 'calc(11px * var(--font-scale, 1))', letterSpacing: '3px', color: 'var(--text-dim)', background: 'transparent', border: 'none', cursor: 'pointer' }}>← MESSAGES</button>
       </div>
     )
   }
@@ -116,12 +116,12 @@ export default function CommunityChatThread() {
           align-items: center;
           gap: 14px;
           padding: 16px 0 14px;
-          border-bottom: 1px solid rgba(255,255,255,0.06);
+          border-bottom: 1px solid rgba(var(--fg-rgb),0.06);
           flex-shrink: 0;
         }
         .cc-back-btn {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 11px;
+          font-family: var(--font-mono);
+          font-size: calc(11px * var(--font-scale, 1));
           letter-spacing: 2px;
           color: var(--text-dim);
           background: transparent;
@@ -132,20 +132,20 @@ export default function CommunityChatThread() {
           flex-shrink: 0;
         }
         .cc-back-btn:hover { color: var(--saffron); }
-        .cc-header-icon { font-size: 28px; flex-shrink: 0; }
+        .cc-header-icon { font-size: calc(28px * var(--font-scale, 1)); flex-shrink: 0; }
         .cc-header-info { flex: 1; min-width: 0; }
         .cc-header-name {
-          font-family: 'Orbitron', sans-serif;
+          font-family: var(--font-display);
           font-weight: 700;
-          font-size: 14px;
+          font-size: calc(14px * var(--font-scale, 1));
           letter-spacing: 3px;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
         }
         .cc-header-meta {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 10px;
+          font-family: var(--font-mono);
+          font-size: calc(10px * var(--font-scale, 1));
           letter-spacing: 1px;
           color: var(--text-dim);
           margin-top: 3px;
@@ -156,30 +156,30 @@ export default function CommunityChatThread() {
           flex-shrink: 0;
         }
         .cc-view-link {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 9px;
+          font-family: var(--font-mono);
+          font-size: calc(9px * var(--font-scale, 1));
           letter-spacing: 2px;
           color: var(--text-dim);
           text-decoration: none;
           padding: 5px 10px;
-          border: 1px solid rgba(255,255,255,0.1);
+          border: 1px solid rgba(var(--fg-rgb),0.1);
           transition: all 0.2s;
           white-space: nowrap;
         }
-        .cc-view-link:hover { color: var(--saffron); border-color: rgba(255,153,51,0.3); }
+        .cc-view-link:hover { color: var(--saffron); border-color: rgba(var(--accent-rgb),0.3); }
         .cc-members-btn {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 9px;
+          font-family: var(--font-mono);
+          font-size: calc(9px * var(--font-scale, 1));
           letter-spacing: 2px;
           color: var(--text-dim);
           background: transparent;
           padding: 5px 10px;
-          border: 1px solid rgba(255,255,255,0.1);
+          border: 1px solid rgba(var(--fg-rgb),0.1);
           cursor: pointer;
           transition: all 0.2s;
           white-space: nowrap;
         }
-        .cc-members-btn:hover { color: var(--saffron); border-color: rgba(255,153,51,0.3); }
+        .cc-members-btn:hover { color: var(--saffron); border-color: rgba(var(--accent-rgb),0.3); }
         .cc-messages-area {
           flex: 1;
           overflow-y: auto;
@@ -190,11 +190,11 @@ export default function CommunityChatThread() {
         }
         .cc-messages-area::-webkit-scrollbar { width: 4px; }
         .cc-messages-area::-webkit-scrollbar-track { background: transparent; }
-        .cc-messages-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+        .cc-messages-area::-webkit-scrollbar-thumb { background: rgba(var(--fg-rgb),0.08); border-radius: 2px; }
         .cc-msg-group { margin-bottom: 12px; }
         .cc-msg-sender {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 9px;
+          font-family: var(--font-mono);
+          font-size: calc(9px * var(--font-scale, 1));
           letter-spacing: 1.5px;
           color: var(--text-dim);
           margin-bottom: 4px;
@@ -212,13 +212,13 @@ export default function CommunityChatThread() {
           width: 28px;
           height: 28px;
           border-radius: 50%;
-          background: rgba(255,153,51,0.12);
-          border: 1px solid rgba(255,153,51,0.25);
+          background: rgba(var(--accent-rgb),0.12);
+          border: 1px solid rgba(var(--accent-rgb),0.25);
           display: flex;
           align-items: center;
           justify-content: center;
-          font-family: 'Orbitron', sans-serif;
-          font-size: 10px;
+          font-family: var(--font-display);
+          font-size: calc(10px * var(--font-scale, 1));
           color: var(--saffron);
           flex-shrink: 0;
           overflow: hidden;
@@ -228,27 +228,27 @@ export default function CommunityChatThread() {
         .cc-msg-row.mine .cc-bubble-wrap { align-items: flex-end; }
         .cc-bubble {
           padding: 10px 14px;
-          font-family: 'Rajdhani', sans-serif;
-          font-size: 15px;
+          font-family: var(--font-body);
+          font-size: calc(15px * var(--font-scale, 1));
           line-height: 1.5;
           word-break: break-word;
           white-space: pre-wrap;
         }
         .cc-bubble.theirs {
-          background: rgba(13,13,26,0.8);
-          border: 1px solid rgba(255,255,255,0.07);
-          color: rgba(224,224,255,0.85);
+          background: rgba(var(--surface-rgb),0.8);
+          border: 1px solid rgba(var(--fg-rgb),0.07);
+          color: rgba(var(--text-rgb),0.85);
           border-radius: 0 8px 8px 8px;
         }
         .cc-bubble.mine {
-          background: rgba(255,153,51,0.12);
-          border: 1px solid rgba(255,153,51,0.2);
+          background: rgba(var(--accent-rgb),0.12);
+          border: 1px solid rgba(var(--accent-rgb),0.2);
           color: var(--neon-white);
           border-radius: 8px 0 8px 8px;
         }
         .cc-time {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 9px;
+          font-family: var(--font-mono);
+          font-size: calc(9px * var(--font-scale, 1));
           letter-spacing: 0.5px;
           color: var(--text-dim);
           margin-top: 3px;
@@ -262,24 +262,24 @@ export default function CommunityChatThread() {
           flex-direction: column;
           gap: 12px;
           color: var(--text-dim);
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 11px;
+          font-family: var(--font-mono);
+          font-size: calc(11px * var(--font-scale, 1));
           letter-spacing: 2px;
         }
         .cc-input-area {
-          border-top: 1px solid rgba(255,255,255,0.06);
+          border-top: 1px solid rgba(var(--fg-rgb),0.06);
           padding: 14px 0;
           flex-shrink: 0;
         }
         .cc-non-member {
           padding: 16px;
           text-align: center;
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 10px;
+          font-family: var(--font-mono);
+          font-size: calc(10px * var(--font-scale, 1));
           letter-spacing: 1.5px;
           color: var(--text-dim);
-          background: rgba(13,13,26,0.4);
-          border: 1px dashed rgba(255,255,255,0.06);
+          background: rgba(var(--surface-rgb),0.4);
+          border: 1px dashed rgba(var(--fg-rgb),0.06);
         }
         .cc-input-row {
           display: flex;
@@ -289,11 +289,11 @@ export default function CommunityChatThread() {
         .cc-textarea {
           flex: 1;
           padding: 12px 14px;
-          background: rgba(13,13,26,0.7);
-          border: 1px solid rgba(255,255,255,0.1);
+          background: rgba(var(--surface-rgb),0.7);
+          border: 1px solid rgba(var(--fg-rgb),0.1);
           color: var(--neon-white);
-          font-family: 'Rajdhani', sans-serif;
-          font-size: 15px;
+          font-family: var(--font-body);
+          font-size: calc(15px * var(--font-scale, 1));
           line-height: 1.4;
           resize: none;
           outline: none;
@@ -301,26 +301,26 @@ export default function CommunityChatThread() {
           overflow-y: auto;
           transition: border-color 0.2s;
         }
-        .cc-textarea:focus { border-color: rgba(255,153,51,0.3); }
+        .cc-textarea:focus { border-color: rgba(var(--accent-rgb),0.3); }
         .cc-textarea::placeholder { color: var(--text-dim); }
         .cc-send-btn {
           padding: 12px 20px;
-          font-family: 'Orbitron', sans-serif;
+          font-family: var(--font-display);
           font-weight: 600;
-          font-size: 11px;
+          font-size: calc(11px * var(--font-scale, 1));
           letter-spacing: 2px;
           border: none;
           cursor: pointer;
           transition: all 0.2s;
           clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
           flex-shrink: 0;
-          color: var(--bg-dark);
+          color: var(--on-accent);
         }
         .cc-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         .cc-send-btn:not(:disabled):hover { opacity: 0.85; transform: translateY(-1px); }
         .cc-hint {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 9px;
+          font-family: var(--font-mono);
+          font-size: calc(9px * var(--font-scale, 1));
           letter-spacing: 1px;
           color: var(--text-dim);
           margin-top: 6px;
@@ -340,7 +340,7 @@ export default function CommunityChatThread() {
           width: 280px;
           height: 100vh;
           background: rgba(8,8,20,0.97);
-          border-left: 1px solid rgba(255,255,255,0.08);
+          border-left: 1px solid rgba(var(--fg-rgb),0.08);
           display: flex;
           flex-direction: column;
           z-index: 101;
@@ -352,9 +352,9 @@ export default function CommunityChatThread() {
           align-items: center;
           justify-content: space-between;
           padding: 18px 20px 14px;
-          border-bottom: 1px solid rgba(255,255,255,0.06);
-          font-family: 'Orbitron', sans-serif;
-          font-size: 11px;
+          border-bottom: 1px solid rgba(var(--fg-rgb),0.06);
+          font-family: var(--font-display);
+          font-size: calc(11px * var(--font-scale, 1));
           font-weight: 600;
           letter-spacing: 3px;
           color: var(--neon-white);
@@ -365,7 +365,7 @@ export default function CommunityChatThread() {
           border: none;
           color: var(--text-dim);
           cursor: pointer;
-          font-size: 16px;
+          font-size: calc(16px * var(--font-scale, 1));
           line-height: 1;
           transition: color 0.2s;
           padding: 0;
@@ -378,7 +378,7 @@ export default function CommunityChatThread() {
         }
         .cc-members-list::-webkit-scrollbar { width: 3px; }
         .cc-members-list::-webkit-scrollbar-track { background: transparent; }
-        .cc-members-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); }
+        .cc-members-list::-webkit-scrollbar-thumb { background: rgba(var(--fg-rgb),0.06); }
         .cc-member-row {
           display: flex;
           align-items: center;
@@ -387,16 +387,16 @@ export default function CommunityChatThread() {
           text-decoration: none;
           transition: background 0.15s;
         }
-        .cc-member-row:hover { background: rgba(255,153,51,0.05); }
+        .cc-member-row:hover { background: rgba(var(--accent-rgb),0.05); }
         .cc-member-name {
-          font-family: 'Rajdhani', sans-serif;
-          font-size: 14px;
+          font-family: var(--font-body);
+          font-size: calc(14px * var(--font-scale, 1));
           color: var(--neon-white);
           line-height: 1.2;
         }
         .cc-member-handle {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 9px;
+          font-family: var(--font-mono);
+          font-size: calc(9px * var(--font-scale, 1));
           letter-spacing: 1px;
           color: var(--text-dim);
         }
@@ -432,7 +432,7 @@ export default function CommunityChatThread() {
           <div className="cc-empty">LOADING...</div>
         ) : messages.length === 0 ? (
           <div className="cc-empty">
-            <span style={{ fontSize: '28px' }}>{community.icon}</span>
+            <span style={{ fontSize: 'calc(28px * var(--font-scale, 1))' }}>{community.icon}</span>
             <span>No messages yet — be the first to say hello!</span>
           </div>
         ) : (
@@ -494,7 +494,7 @@ export default function CommunityChatThread() {
               />
               <button
                 className="cc-send-btn"
-                style={{ background: sectionColor === 'var(--white-pure)' ? 'rgba(255,255,255,0.9)' : sectionColor }}
+                style={{ background: sectionColor === 'var(--white-pure)' ? 'rgba(var(--fg-rgb),0.9)' : sectionColor }}
                 onClick={handleSend}
                 disabled={sending || !input.trim()}
               >
@@ -516,11 +516,11 @@ export default function CommunityChatThread() {
             </div>
             <div className="cc-members-list">
               {members === undefined ? (
-                <div style={{ padding: '20px', textAlign: 'center', fontFamily: "'Share Tech Mono'", fontSize: '10px', color: 'var(--text-dim)', letterSpacing: '2px' }}>
+                <div style={{ padding: '20px', textAlign: 'center', fontFamily: "var(--font-mono)", fontSize: 'calc(10px * var(--font-scale, 1))', color: 'var(--text-dim)', letterSpacing: '2px' }}>
                   LOADING...
                 </div>
               ) : members.length === 0 ? (
-                <div style={{ padding: '20px', textAlign: 'center', fontFamily: "'Share Tech Mono'", fontSize: '10px', color: 'var(--text-dim)', letterSpacing: '2px' }}>
+                <div style={{ padding: '20px', textAlign: 'center', fontFamily: "var(--font-mono)", fontSize: 'calc(10px * var(--font-scale, 1))', color: 'var(--text-dim)', letterSpacing: '2px' }}>
                   NO MEMBERS YET
                 </div>
               ) : (
