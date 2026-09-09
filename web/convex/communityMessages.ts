@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { assertActive } from "./helpers";
 
 // ─── Send a message to a community ───────────────────────────────────────────
 export const send = mutation({
@@ -16,6 +17,8 @@ export const send = mutation({
       .withIndex("by_token", (q) => q.eq("tokenIdentifier", identity.subject))
       .unique();
     if (!user) throw new Error("User not found");
+    assertActive(user);
+    if (!content.trim()) throw new Error("Message is empty");
 
     // Must be a member
     const membership = await ctx.db
@@ -26,7 +29,7 @@ export const send = mutation({
       .unique();
     if (!membership) throw new Error("You must join this community to send messages");
 
-    return (ctx.db as any).insert("communityMessages", {
+    return ctx.db.insert("communityMessages", {
       communityId,
       senderId: user._id,
       content: content.trim(),

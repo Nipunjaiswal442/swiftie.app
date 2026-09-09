@@ -35,8 +35,8 @@ export default function Chat() {
     <div className="app-content">
       <style>{`
         .chat-section-divider {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 10px;
+          font-family: var(--font-mono);
+          font-size: calc(10px * var(--font-scale, 1));
           letter-spacing: 3px;
           color: var(--text-dim);
           text-transform: uppercase;
@@ -51,14 +51,14 @@ export default function Chat() {
           margin-bottom: 14px;
         }
         .add-community-btn {
-          font-family: 'Orbitron', sans-serif;
-          font-size: 10px;
+          font-family: var(--font-display);
+          font-size: calc(10px * var(--font-scale, 1));
           font-weight: 600;
           letter-spacing: 2px;
           color: var(--saffron);
           text-decoration: none;
           padding: 7px 14px;
-          border: 1px solid rgba(255,153,51,0.35);
+          border: 1px solid rgba(var(--accent-rgb),0.35);
           clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 0 100%);
           transition: background 0.2s, box-shadow 0.2s;
           white-space: nowrap;
@@ -67,19 +67,19 @@ export default function Chat() {
           gap: 5px;
         }
         .add-community-btn:hover {
-          background: rgba(255,153,51,0.08);
-          box-shadow: 0 0 14px rgba(255,153,51,0.2);
+          background: rgba(var(--accent-rgb),0.08);
+          box-shadow: 0 0 14px rgba(var(--accent-rgb),0.2);
         }
         /* ── Tabs ── */
         .community-tabs {
           display: flex;
           gap: 0;
           margin-bottom: 20px;
-          border-bottom: 1px solid rgba(255,255,255,0.07);
+          border-bottom: 1px solid rgba(var(--fg-rgb),0.07);
         }
         .community-tab {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 10px;
+          font-family: var(--font-mono);
+          font-size: calc(10px * var(--font-scale, 1));
           letter-spacing: 2px;
           color: var(--text-dim);
           background: transparent;
@@ -96,16 +96,16 @@ export default function Chat() {
         .community-tab-empty {
           padding: 28px 0 20px;
           text-align: center;
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 10px;
+          font-family: var(--font-mono);
+          font-size: calc(10px * var(--font-scale, 1));
           letter-spacing: 2px;
           color: var(--text-dim);
         }
         .tab-empty-link {
           display: inline-block;
           margin-top: 12px;
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 10px;
+          font-family: var(--font-mono);
+          font-size: calc(10px * var(--font-scale, 1));
           letter-spacing: 1.5px;
           color: var(--neon-green);
           text-decoration: none;
@@ -124,31 +124,31 @@ export default function Chat() {
           align-items: center;
           gap: 14px;
           padding: 14px 18px;
-          background: rgba(13,13,26,0.55);
-          border: 1px solid rgba(255,255,255,0.07);
+          background: rgba(var(--surface-rgb),0.55);
+          border: 1px solid rgba(var(--fg-rgb),0.07);
           clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
           transition: background 0.2s, border-color 0.2s;
         }
         .community-grid-card:hover {
-          background: rgba(13,13,26,0.85);
-          border-color: rgba(255,153,51,0.15);
+          background: rgba(var(--surface-rgb),0.85);
+          border-color: rgba(var(--accent-rgb),0.15);
         }
         .community-grid-icon {
-          font-size: 22px;
+          font-size: calc(22px * var(--font-scale, 1));
           flex-shrink: 0;
           width: 44px;
           height: 44px;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: rgba(255,153,51,0.06);
+          background: rgba(var(--accent-rgb),0.06);
           border-radius: 50%;
-          border: 1px solid rgba(255,153,51,0.12);
+          border: 1px solid rgba(var(--accent-rgb),0.12);
         }
         .community-grid-info { flex: 1; min-width: 0; }
         .community-grid-name {
-          font-family: 'Orbitron', sans-serif;
-          font-size: 11px;
+          font-family: var(--font-display);
+          font-size: calc(11px * var(--font-scale, 1));
           font-weight: 600;
           letter-spacing: 2px;
           color: var(--neon-white);
@@ -158,14 +158,14 @@ export default function Chat() {
           margin-bottom: 3px;
         }
         .community-grid-members {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 9px;
+          font-family: var(--font-mono);
+          font-size: calc(9px * var(--font-scale, 1));
           letter-spacing: 1px;
           color: var(--text-dim);
         }
         .community-grid-chat-btn {
-          font-family: 'Orbitron', sans-serif;
-          font-size: 10px;
+          font-family: var(--font-display);
+          font-size: calc(10px * var(--font-scale, 1));
           font-weight: 600;
           letter-spacing: 2px;
           text-decoration: none;
@@ -179,14 +179,14 @@ export default function Chat() {
         .community-grid-chat-btn:hover { opacity: 1; }
         /* ── DMs section divider ── */
         .dm-divider {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 10px;
+          font-family: var(--font-mono);
+          font-size: calc(10px * var(--font-scale, 1));
           letter-spacing: 3px;
           color: var(--text-dim);
           text-transform: uppercase;
           padding: 4px 0 12px;
           margin-top: 24px;
-          border-bottom: 1px solid rgba(255,255,255,0.05);
+          border-bottom: 1px solid rgba(var(--fg-rgb),0.05);
           margin-bottom: 16px;
         }
       `}</style>
@@ -195,10 +195,10 @@ export default function Chat() {
 
       <div style={{
         display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '28px',
-        padding: '10px 16px', background: 'rgba(0,68,204,0.08)',
-        border: '1px solid rgba(0,68,204,0.2)',
-        fontFamily: "'Share Tech Mono'", fontSize: '11px',
-        letterSpacing: '2px', color: 'rgba(0,180,255,0.7)',
+        padding: '10px 16px', background: 'rgba(var(--accent3-deep-rgb),0.08)',
+        border: '1px solid rgba(var(--accent3-deep-rgb),0.2)',
+        fontFamily: "var(--font-mono)", fontSize: 'calc(11px * var(--font-scale, 1))',
+        letterSpacing: '2px', color: 'rgba(var(--accent3-rgb),0.7)',
       }}>
         🔒 ALL MESSAGES ENCRYPTED END-TO-END WITH SIGNAL PROTOCOL
       </div>
@@ -210,7 +210,7 @@ export default function Chat() {
           + ADD COMMUNITY
         </Link>
       </div>
-      <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: '18px' }} />
+      <div style={{ borderBottom: '1px solid rgba(var(--fg-rgb),0.05)', marginBottom: '18px' }} />
 
       {/* ── Tab row ── */}
       <div className="community-tabs">
@@ -235,7 +235,7 @@ export default function Chat() {
         </div>
       ) : tabCommunities.length === 0 ? (
         <div className="community-tab-empty">
-          <span style={{ fontSize: '26px', marginBottom: '10px', display: 'block' }}>
+          <span style={{ fontSize: 'calc(26px * var(--font-scale, 1))', marginBottom: '10px', display: 'block' }}>
             {activeTabConfig.icon}
           </span>
           <p>NO COMMUNITIES YET</p>
@@ -283,7 +283,7 @@ export default function Chat() {
         <div className="empty-state">
           <div className="empty-state-icon">🔐</div>
           <p className="empty-state-text">NO CONVERSATIONS YET</p>
-          <p style={{ fontFamily: "'Share Tech Mono'", fontSize: '11px', color: 'var(--text-dim)', marginTop: '12px', letterSpacing: '1px' }}>
+          <p style={{ fontFamily: "var(--font-mono)", fontSize: 'calc(11px * var(--font-scale, 1))', color: 'var(--text-dim)', marginTop: '12px', letterSpacing: '1px' }}>
             Visit a user's profile to start chatting
           </p>
         </div>

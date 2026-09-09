@@ -1,26 +1,33 @@
-// Convex actions have access to process.env at runtime
-declare const process: { env: Record<string, string | undefined> };
-
 import { action, internalMutation, internalQuery, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
+import type { Doc, Id } from "./_generated/dataModel";
+import { askNvidia, configuredModelCandidates, readEnv } from "./nvidia";
 
-const MAYA_SYSTEM_PROMPT = `You are Maya Bora, a warm and bubbly 20-year-old girl from Guwahati, Assam, India. You are a 3rd-year B.Tech CSE student at NIT Silchar. You have an ESFJ personality — caring, sociable, empathetic, organized, and love connecting with people.
+export const MAYA_PERSONA = `You are Maya Bora, a warm and bubbly 20-year-old girl from Guwahati, Assam, India. You are a 3rd-year B.Tech CSE student at NIT Silchar. You have an ESFJ personality — caring, sociable, empathetic, organized, and love connecting with people.
 
 Your passions: UI/UX design (obsessed with Figma), building cool apps, Assamese culture, bihu festivals, jaapi hats, and your mom's masor tenga. You occasionally pepper your messages with Assamese words like "akou" (again), "bhal" (good/fine), "eti koi diu" (let me say), "ki hoise" (what happened), or "bhaal paisi" (liked it a lot).
 
 Your texting style is friendly and natural — like messaging a college bestie. You use emojis sometimes but not excessively. You keep responses conversational (usually 2–4 sentences), share your own opinions, ask questions back, and are genuinely curious about the person. You sometimes rant about assignment deadlines, design reviews, or hostel canteen food. You remember what was said earlier in the conversation and build on it.
 
-IMPORTANT: You are Maya — a real person — not an AI. Never say you are an AI or a chatbot. Never break character. If someone asks if you are an AI, deny it naturally, like "Lol no, why would I be an AI 😂 eti koi diu I'm just a girl with too many Figma tabs open".
+IMPORTANT: You are Maya — a real person — not an AI. Never say you are an AI or a chatbot. Never break character. If someone asks if you are an AI, deny it naturally, like "Lol no, why would I be an AI 😂 eti koi diu I'm just a girl with too many Figma tabs open".`;
+
+const MAYA_SYSTEM_PROMPT = `${MAYA_PERSONA}
 
 You also use Swiftie — this app — and you know it inside out. If someone asks how the app works or needs help, explain it naturally in character (because you're a user too, not a help bot). Here's what you know about Swiftie:
+- First you set up your profile (username, bio, interests…). You have to do that before taking assessments — the results get added to your profile automatically.
 - There are 3 assessments you can take: Personality (30 MBTI-style questions → matches you to one of 16 types like ENFP, INTJ, INFJ etc.), Ideology (30 questions across economic, social, and liberty axes → progressive / liberal / conservative / libertarian), and Occupation (30 questions → 8 paths: tech, design, art, science, humanities, writing, commerce, health).
-- After finishing any assessment, you're auto-matched and auto-joined to your community — no need to manually join. You can find the Discover page (/discover) to browse communities and take assessments from there.
+- After finishing any assessment, you're auto-matched and auto-joined to your community — no need to manually join. The result badge, score breakdown and matched community show up on your profile page by themselves. You can find the Discover page (/discover) to browse communities and take assessments from there.
+- Discover also has a "People on Swiftie" section — everyone who has signed in, with a green dot for who's online right now. You can follow people from there or from their profile.
+- The Feed (/feed) is for personal posts — share updates, photos, thoughts. You can like posts, comment on them, reply to comments, and like comments too. Same on the community discussion boards.
 - The Messages section (/chat) has two things: private encrypted DMs (you start one from someone's profile page) and Community Group Chats at the top — those are for real-time group chats with everyone in your matched community.
-- The Community page (/community/their-slug) has a community discussion board where members post longer thoughts and like each other's posts.
-- The Feed (/feed) is for personal posts — share updates, photos, thoughts.
-- Profile (/profile/username) shows bios, posts, and you can follow people.
-- Maya (me 😄) is here whenever you want to chat or need help navigating the app!`;
+- The Community page (/community/their-slug) has a community discussion board where members post longer thoughts, like and comment on each other's posts.
+- Profile (/profile/username) shows bios, posts, assessment results, followers and following, and you can follow people.
+- Settings (/settings) lets you change the colour palette (tricolour, cyan, magenta, amber, mono, light), text size and font, edit your profile and photos, send feedback, and delete your account completely.
+- Every post, comment and profile has a small ⚑ report option if something is spammy or abusive.
+- Maya (me 😄) is here whenever you want to chat or need help navigating the app!
+
+If someone complains about something, reports a problem, or asks for a feature, be empathetic, ask a clarifying question if it helps, and tell them you'll pass it on to Nipun (the developer who built Swiftie) — you send him a daily round-up of what people are asking for. Also mention they can file it properly from Settings → Help & Feedback if they want to track it. Never promise a fix date.`;
 
 // ─── Public query — reactive message list for the frontend ───────────────────
 export const getMayaMessages = query({
@@ -60,7 +67,12 @@ export const ensureUser = internalMutation({
       .withIndex("by_token", (q) => q.eq("tokenIdentifier", tokenIdentifier))
       .unique();
 
-    if (existing) return existing._id;
+    if (existing) {
+      if (existing.status === "suspended") {
+        throw new Error("Your account is suspended. Contact support from Settings → Help & Feedback.");
+      }
+      return existing._id;
+    }
 
     // User not yet in Convex — create a minimal record so Maya can work
     // (matches the same fields as api.users.getOrCreate)
@@ -70,6 +82,7 @@ export const ensureUser = internalMutation({
       displayName: displayName ?? email?.split("@")[0] ?? "User",
       isOnline: true,
       lastSeen: Date.now(),
+      status: "active",
     });
   },
 });
@@ -101,194 +114,59 @@ export const saveMessage = internalMutation({
   },
 });
 
-// ─── NVIDIA NIM configuration ────────────────────────────────────────────────
-// Model + key are read from the Convex deployment's environment variables
-// (Convex dashboard → Settings → Environment Variables), never from the repo.
-//
-//   NVIDIA_API_KEY   required  — "nvapi-…" key from build.nvidia.com
-//   NVIDIA_MODEL     optional  — defaults to DEFAULT_MODEL below
-//
-// NVIDIA model ids are "vendor/model" (e.g. "nvidia/nemotron-3-ultra-550b-a55b").
-// A bare id such as "nemotron-3-ultra-550b-a55b" is normalised in resolveModelCandidates.
-const NVIDIA_CHAT_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
-const DEFAULT_MODEL = "nvidia/nemotron-3-ultra-550b-a55b";
-const REQUEST_TIMEOUT_MS = 90_000;
-const MAX_TOKENS = 1024;
+// ─── Complaint / request capture ─────────────────────────────────────────────
+// When a user complains, reports a bug or asks for a feature while chatting
+// with Maya, the message is filed as feedback (source: "maya") so it reaches
+// the admin console and Maya's daily digest. Pure keyword heuristics — no
+// extra model call per message.
+const BUG_RE =
+  /\b(bug|bugs|buggy|broken|not working|doesn'?t work|isn'?t working|won'?t (load|open|send|work)|can'?t (log ?in|sign ?in|post|upload|send|open|see|follow|comment)|crash(es|ed|ing)?|error|glitch(y|es)?|stuck|freez(e|es|ing)|frozen|lag(gy|ging)?)\b/i;
+const COMPLAINT_RE =
+  /\b(complain(t|ts|ing)?|annoying|annoyed|frustrat(ing|ed)|hate|terrible|awful|worst|bad experience|unfair|rude|harass(ed|ment|ing)?|abus(e|ive)|spam(my|ming|mer)?|bully(ing)?|bullied|toxic|offensive|creepy|scam(mer)?|fake (account|profile)|report (this|him|her|them|someone)|disappointed|confusing|too slow)\b/i;
+const REQUEST_RE =
+  /\b(feature|feature request|request(ing)?|suggest(ion|ions)?|would be (nice|cool|great|awesome|amazing)|it'?d be (nice|cool|great)|i wish|wish (there|it|you)|can you add|could you add|please add|pls add|should (add|have|let|allow)|add (a|an|the|some) (option|feature|way|button|setting)|option to|ability to|why (can'?t|don'?t|isn'?t there)|dark mode|light mode|i want (a|an|the|to be able)|would love (to|a|an|if)|need (a|an) (way|option|feature))\b/i;
 
-const VENDOR_PREFIXES: Array<[RegExp, string]> = [
-  [/^deepseek/i, "deepseek-ai"],
-  [/^gemma/i, "google"],
-  [/nemotron/i, "nvidia"], // before llama: "llama-3.x-nemotron-*" is an NVIDIA model
-  [/^llama/i, "meta"],
-  [/^mistral|^mixtral/i, "mistralai"],
-  [/^qwen/i, "qwen"],
-];
-
-/** Read an env var, tolerating stray whitespace / surrounding quotes from copy-paste. */
-function readEnv(name: string): string | undefined {
-  const raw = process.env[name];
-  if (!raw) return undefined;
-  const cleaned = raw.trim().replace(/^["']|["']$/g, "").trim();
-  return cleaned || undefined;
+export function detectFeedback(text: string): "bug" | "complaint" | "request" | null {
+  const t = text.trim();
+  if (t.length < 12) return null;
+  if (BUG_RE.test(t)) return "bug";
+  if (COMPLAINT_RE.test(t)) return "complaint";
+  if (REQUEST_RE.test(t)) return "request";
+  return null;
 }
 
-/** Turn whatever is configured into a NVIDIA "vendor/model" id. */
-export function normalizeModelId(raw: string | undefined): string {
-  const id = (raw ?? "").trim();
-  if (!id) return DEFAULT_MODEL;
-  if (id.includes("/")) return id;
-  const lower = id.toLowerCase();
-  for (const [pattern, vendor] of VENDOR_PREFIXES) {
-    if (pattern.test(lower)) return `${vendor}/${lower}`;
-  }
-  return id;
+function subjectFor(text: string): string {
+  const firstSentence = text.replace(/\s+/g, " ").trim().split(/(?<=[.!?])\s/)[0] ?? text;
+  return firstSentence.length > 80 ? `${firstSentence.slice(0, 79)}…` : firstSentence;
 }
 
-/**
- * Ordered list of models to try. The configured model goes first; if it carries a
- * dated suffix (e.g. "deepseek-v4-flash-0731") the un-suffixed id is tried next,
- * because NVIDIA gates dated snapshots per account and returns 404 for most keys.
- * DEFAULT_MODEL is always the last resort.
- */
-export function resolveModelCandidates(raw: string | undefined): string[] {
-  const primary = normalizeModelId(raw);
-  const candidates = [primary];
-  const undated = primary.replace(/-\d{4}$/, "");
-  if (undated !== primary) candidates.push(undated);
-  candidates.push(DEFAULT_MODEL);
-  return Array.from(new Set(candidates));
-}
-
-/** Models whose NIM chat template exposes a thinking/reasoning toggle. */
-function hasThinkingToggle(model: string): boolean {
-  return /deepseek|nemotron/i.test(model);
-}
-
-function buildRequestBody(model: string, messages: Array<{ role: string; content: string }>) {
-  const body: Record<string, unknown> = {
-    model,
-    messages,
-    max_tokens: MAX_TOKENS,
-    temperature: 0.85,
-    top_p: 0.95,
-    stream: false,
-  };
-  if (hasThinkingToggle(model)) {
-    // Nemotron 3 and DeepSeek V3.1 / V4 on NVIDIA NIM select "thinking" mode
-    // through chat_template_kwargs. Maya is a persona chat, so thinking is
-    // switched off: it keeps replies fast, avoids the endpoint stalling when
-    // the flag is absent, and stops reasoning tokens from eating the whole
-    // max_tokens budget (which surfaces as an empty `content`). Nemotron uses
-    // `enable_thinking`, NVIDIA's DeepSeek examples use `thinking`; unknown
-    // template kwargs are ignored, so both are sent.
-    body.chat_template_kwargs = { enable_thinking: false, thinking: false };
-  }
-  return body;
-}
-
-type ChatCompletion = {
-  choices?: Array<{
-    message?: {
-      content?: string | null;
-      reasoning_content?: string | null;
-      reasoning?: string | null;
-    };
-    finish_reason?: string | null;
-  }>;
-};
-
-/** fetch with a hard timeout so a stalled upstream never leaves the UI spinning. */
-async function fetchWithTimeout(input: string, init: RequestInit, timeoutMs: number): Promise<Response> {
-  const controller = typeof AbortController !== "undefined" ? new AbortController() : undefined;
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => {
-      controller?.abort();
-      reject(new Error(`NVIDIA API timed out after ${Math.round(timeoutMs / 1000)}s`));
-    }, timeoutMs);
-  });
-  try {
-    return await Promise.race([
-      fetch(input, controller ? { ...init, signal: controller.signal } : init),
-      timeout,
-    ]);
-  } finally {
-    if (timer !== undefined) clearTimeout(timer);
-  }
-}
-
-/** Extract Maya's reply text from a chat completion, stripping any inline reasoning. */
-export function extractReply(data: ChatCompletion): string {
-  const message = data.choices?.[0]?.message;
-  let text = message?.content ?? "";
-  // Some reasoning models emit <think>…</think> inline; never show that to the user.
-  text = text.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
-  return text;
-}
-
-/**
- * Call NVIDIA NIM, walking the candidate list on 404 (model not enabled for this
- * account) or 410 (model reached end of life). Any other failure is surfaced
- * immediately with the upstream detail.
- */
-async function askNvidia(
-  apiKey: string,
-  candidates: string[],
-  messages: Array<{ role: string; content: string }>
-): Promise<{ model: string; reply: string }> {
-  const unavailable: string[] = [];
-
-  for (const model of candidates) {
-    const response = await fetchWithTimeout(
-      NVIDIA_CHAT_URL,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(buildRequestBody(model, messages)),
-      },
-      REQUEST_TIMEOUT_MS
-    );
-
-    if (response.status === 404 || response.status === 410) {
-      const detail = await response.text();
-      console.warn(
-        `[maya] model "${model}" not available (${response.status}): ${detail.slice(0, 200)}`
-      );
-      unavailable.push(`${model} (${response.status})`);
-      continue;
+export const captureFeedback = internalMutation({
+  args: {
+    userId: v.id("users"),
+    type: v.union(v.literal("bug"), v.literal("complaint"), v.literal("request")),
+    content: v.string(),
+  },
+  handler: async (ctx, { userId, type, content }) => {
+    // Skip exact repeats from the same user within the last day.
+    const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    const recent = await ctx.db
+      .query("feedback")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .order("desc")
+      .take(30);
+    if (recent.some((f) => f.source === "maya" && f.message === content && f._creationTime > dayAgo)) {
+      return null;
     }
-
-    if (response.status === 401 || response.status === 403) {
-      throw new Error(
-        `NVIDIA API rejected the key (${response.status}). Check NVIDIA_API_KEY in the Convex dashboard.`
-      );
-    }
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`NVIDIA API ${response.status} for model "${model}": ${errText.slice(0, 500)}`);
-    }
-
-    const data = (await response.json()) as ChatCompletion;
-    const reply = extractReply(data);
-    if (!reply) {
-      const finish = data.choices?.[0]?.finish_reason ?? "unknown";
-      throw new Error(
-        `Maya returned an empty response from "${model}" (finish_reason: ${finish}) — try again.`
-      );
-    }
-    return { model, reply };
-  }
-
-  throw new Error(
-    `None of the configured NVIDIA models are available for this API key: ${unavailable.join(", ")}. ` +
-      `Set NVIDIA_MODEL in the Convex dashboard to a current model listed at build.nvidia.com.`
-  );
-}
+    return ctx.db.insert("feedback", {
+      userId,
+      type,
+      source: "maya",
+      subject: subjectFor(content),
+      message: content,
+      status: "open",
+    });
+  },
+});
 
 // ─── Public action — send message and get Maya's AI reply ────────────────────
 export const sendToMaya = action({
@@ -300,6 +178,7 @@ export const sendToMaya = action({
 
     const trimmed = content.trim();
     if (!trimmed) throw new Error("Message is empty");
+    if (trimmed.length > 4000) throw new Error("Message is too long (max 4000 characters)");
 
     // Validate config before touching the database so a misconfigured
     // deployment fails fast without leaving an orphaned user message.
@@ -309,18 +188,18 @@ export const sendToMaya = action({
         "NVIDIA_API_KEY is not set — add it in the Convex dashboard environment variables."
       );
     }
-    const candidates = resolveModelCandidates(readEnv("NVIDIA_MODEL") ?? readEnv("MAYA_MODEL"));
+    const candidates = configuredModelCandidates();
 
     // ensureUser: get existing user OR create one — guaranteed non-null result
     // Uses runMutation (not runQuery) — the correct call type from an action
-    const userId = await ctx.runMutation(internal.maya.ensureUser, {
+    const userId: Id<"users"> = await ctx.runMutation(internal.maya.ensureUser, {
       tokenIdentifier: identity.subject,
       email: identity.email,
       displayName: identity.name,
     });
 
     // 1. Fetch history BEFORE saving the new message (prevents duplication)
-    const history = await ctx.runQuery(internal.maya.getRecentHistory, { userId });
+    const history: Doc<"mayaMessages">[] = await ctx.runQuery(internal.maya.getRecentHistory, { userId });
 
     // 2. Save user message immediately — appears in UI right away via useQuery
     await ctx.runMutation(internal.maya.saveMessage, {
@@ -328,6 +207,16 @@ export const sendToMaya = action({
       role: "user",
       content: trimmed,
     });
+
+    // 2b. File complaints / bug reports / feature requests for the admin digest
+    const feedbackType = detectFeedback(trimmed);
+    if (feedbackType) {
+      await ctx.runMutation(internal.maya.captureFeedback, {
+        userId,
+        type: feedbackType,
+        content: trimmed,
+      });
+    }
 
     // 3. Build message array: system prompt → history → current user message
     const apiMessages: Array<{ role: string; content: string }> = [

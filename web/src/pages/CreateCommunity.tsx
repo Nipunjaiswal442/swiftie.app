@@ -68,8 +68,8 @@ export default function CreateCommunity() {
         .cc-form { max-width: 560px; }
         .cc-field { margin-bottom: 28px; }
         .cc-field-label {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 10px;
+          font-family: var(--font-mono);
+          font-size: calc(10px * var(--font-scale, 1));
           letter-spacing: 2.5px;
           color: var(--text-dim);
           display: block;
@@ -79,26 +79,26 @@ export default function CreateCommunity() {
         .cc-input {
           width: 100%;
           padding: 12px 14px;
-          background: rgba(13,13,26,0.7);
-          border: 1px solid rgba(255,255,255,0.1);
+          background: rgba(var(--surface-rgb),0.7);
+          border: 1px solid rgba(var(--fg-rgb),0.1);
           color: var(--neon-white);
-          font-family: 'Rajdhani', sans-serif;
-          font-size: 16px;
+          font-family: var(--font-body);
+          font-size: calc(16px * var(--font-scale, 1));
           outline: none;
           box-sizing: border-box;
           transition: border-color 0.2s;
           clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
         }
-        .cc-input:focus { border-color: rgba(255,153,51,0.4); }
+        .cc-input:focus { border-color: rgba(var(--accent-rgb),0.4); }
         .cc-input::placeholder { color: var(--text-dim); opacity: 0.6; }
         .cc-textarea {
           width: 100%;
           padding: 12px 14px;
-          background: rgba(13,13,26,0.7);
-          border: 1px solid rgba(255,255,255,0.1);
+          background: rgba(var(--surface-rgb),0.7);
+          border: 1px solid rgba(var(--fg-rgb),0.1);
           color: var(--neon-white);
-          font-family: 'Rajdhani', sans-serif;
-          font-size: 15px;
+          font-family: var(--font-body);
+          font-size: calc(15px * var(--font-scale, 1));
           line-height: 1.55;
           resize: vertical;
           outline: none;
@@ -107,11 +107,11 @@ export default function CreateCommunity() {
           transition: border-color 0.2s;
           clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
         }
-        .cc-textarea:focus { border-color: rgba(255,153,51,0.4); }
+        .cc-textarea:focus { border-color: rgba(var(--accent-rgb),0.4); }
         .cc-textarea::placeholder { color: var(--text-dim); opacity: 0.6; }
         .cc-char-hint {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 9px;
+          font-family: var(--font-mono);
+          font-size: calc(9px * var(--font-scale, 1));
           letter-spacing: 1px;
           color: var(--text-dim);
           margin-top: 5px;
@@ -126,9 +126,9 @@ export default function CreateCommunity() {
         .cc-emoji-btn {
           width: 44px;
           height: 44px;
-          font-size: 20px;
-          background: rgba(13,13,26,0.5);
-          border: 1px solid rgba(255,255,255,0.08);
+          font-size: calc(20px * var(--font-scale, 1));
+          background: rgba(var(--surface-rgb),0.5);
+          border: 1px solid rgba(var(--fg-rgb),0.08);
           cursor: pointer;
           display: flex;
           align-items: center;
@@ -137,10 +137,10 @@ export default function CreateCommunity() {
           clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 0 100%);
         }
         .cc-emoji-btn.selected {
-          border-color: rgba(255,153,51,0.55);
-          background: rgba(255,153,51,0.1);
+          border-color: rgba(var(--accent-rgb),0.55);
+          background: rgba(var(--accent-rgb),0.1);
         }
-        .cc-emoji-btn:hover { border-color: rgba(255,255,255,0.25); }
+        .cc-emoji-btn:hover { border-color: rgba(var(--fg-rgb),0.25); }
         .cc-emoji-custom-row {
           display: flex;
           align-items: center;
@@ -150,16 +150,16 @@ export default function CreateCommunity() {
         .cc-emoji-custom-input {
           width: 90px;
           padding: 10px 12px;
-          background: rgba(13,13,26,0.7);
-          border: 1px solid rgba(255,255,255,0.1);
+          background: rgba(var(--surface-rgb),0.7);
+          border: 1px solid rgba(var(--fg-rgb),0.1);
           color: var(--neon-white);
-          font-size: 20px;
+          font-size: calc(20px * var(--font-scale, 1));
           text-align: center;
           outline: none;
           transition: border-color 0.2s;
           clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 0 100%);
         }
-        .cc-emoji-custom-input:focus { border-color: rgba(255,153,51,0.4); }
+        .cc-emoji-custom-input:focus { border-color: rgba(var(--accent-rgb),0.4); }
         .cc-preview-wrap {
           display: flex;
           align-items: center;
@@ -173,14 +173,14 @@ export default function CreateCommunity() {
           width: 52px;
           height: 52px;
           border-radius: 50%;
-          background: rgba(255,153,51,0.08);
-          border: 1px solid rgba(255,153,51,0.22);
-          font-size: 26px;
+          background: rgba(var(--accent-rgb),0.08);
+          border: 1px solid rgba(var(--accent-rgb),0.22);
+          font-size: calc(26px * var(--font-scale, 1));
           flex-shrink: 0;
         }
         .cc-preview-label {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 9px;
+          font-family: var(--font-mono);
+          font-size: calc(9px * var(--font-scale, 1));
           letter-spacing: 2px;
           color: var(--text-dim);
         }
@@ -192,8 +192,8 @@ export default function CreateCommunity() {
         }
         .cc-section-option {
           padding: 13px 15px;
-          background: rgba(13,13,26,0.5);
-          border: 1px solid rgba(255,255,255,0.07);
+          background: rgba(var(--surface-rgb),0.5);
+          border: 1px solid rgba(var(--fg-rgb),0.07);
           cursor: pointer;
           transition: background 0.15s, border-color 0.15s;
           display: flex;
@@ -203,20 +203,20 @@ export default function CreateCommunity() {
           user-select: none;
         }
         .cc-section-option.selected {
-          background: rgba(255,153,51,0.07);
-          border-color: rgba(255,153,51,0.38);
+          background: rgba(var(--accent-rgb),0.07);
+          border-color: rgba(var(--accent-rgb),0.38);
         }
-        .cc-section-option:hover { background: rgba(255,255,255,0.03); }
+        .cc-section-option:hover { background: rgba(var(--fg-rgb),0.03); }
         .cc-section-label-text {
-          font-family: 'Orbitron', sans-serif;
-          font-size: 10px;
+          font-family: var(--font-display);
+          font-size: calc(10px * var(--font-scale, 1));
           font-weight: 600;
           letter-spacing: 2px;
           transition: color 0.15s;
         }
         .cc-section-desc {
-          font-family: 'Rajdhani', sans-serif;
-          font-size: 12px;
+          font-family: var(--font-body);
+          font-size: calc(12px * var(--font-scale, 1));
           color: var(--text-dim);
           line-height: 1.35;
         }
@@ -226,21 +226,21 @@ export default function CreateCommunity() {
           margin-bottom: 22px;
           background: rgba(255,51,51,0.08);
           border: 1px solid rgba(255,51,51,0.25);
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 11px;
+          font-family: var(--font-mono);
+          font-size: calc(11px * var(--font-scale, 1));
           letter-spacing: 1px;
           color: rgba(255,110,110,0.9);
           clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
         }
         .cc-submit-btn {
-          font-family: 'Orbitron', sans-serif;
+          font-family: var(--font-display);
           font-weight: 700;
-          font-size: 12px;
+          font-size: calc(12px * var(--font-scale, 1));
           letter-spacing: 2px;
           padding: 15px 36px;
           background: var(--saffron);
           border: none;
-          color: var(--bg-dark);
+          color: var(--on-accent);
           cursor: pointer;
           clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
           transition: opacity 0.2s, transform 0.2s;
@@ -255,7 +255,7 @@ export default function CreateCommunity() {
       {/* Back breadcrumb */}
       <div style={{ marginBottom: '10px' }}>
         <Link to="/chat" style={{
-          fontFamily: "'Share Tech Mono'", fontSize: '11px',
+          fontFamily: "var(--font-mono)", fontSize: 'calc(11px * var(--font-scale, 1))',
           letterSpacing: '2px', color: 'var(--text-dim)', textDecoration: 'none',
           transition: 'color 0.2s',
         }}>
@@ -291,7 +291,7 @@ export default function CreateCommunity() {
               maxLength={4}
               title="Or type any emoji"
             />
-            <span style={{ fontFamily: "'Share Tech Mono'", fontSize: '9px', letterSpacing: '1.5px', color: 'var(--text-dim)' }}>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: 'calc(9px * var(--font-scale, 1))', letterSpacing: '1.5px', color: 'var(--text-dim)' }}>
               OR TYPE YOUR OWN
             </span>
           </div>

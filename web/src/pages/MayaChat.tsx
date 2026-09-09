@@ -3,7 +3,7 @@ import { useQuery, useAction } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 
 // Inline SVG avatar for Maya — consistent, no external dependency
-function MayaAvatar({ size = 48 }: { size?: number }) {
+export function MayaAvatar({ size = 48 }: { size?: number }) {
   return (
     <svg
       width={size}
@@ -15,7 +15,7 @@ function MayaAvatar({ size = 48 }: { size?: number }) {
     >
       {/* Background */}
       <circle cx="50" cy="50" r="50" fill="#1a0a00" />
-      <circle cx="50" cy="50" r="48" fill="rgba(255,153,51,0.08)" stroke="rgba(255,153,51,0.4)" strokeWidth="1" />
+      <circle cx="50" cy="50" r="48" fill="rgba(var(--accent-rgb),0.08)" stroke="rgba(var(--accent-rgb),0.4)" strokeWidth="1" />
 
       {/* Hair — long dark hair */}
       <ellipse cx="50" cy="30" rx="24" ry="22" fill="#1a0805" />
@@ -26,7 +26,7 @@ function MayaAvatar({ size = 48 }: { size?: number }) {
       <ellipse cx="50" cy="46" rx="18" ry="20" fill="#c8825a" />
 
       {/* Bindi */}
-      <circle cx="50" cy="33" r="2.5" fill="#FF9933" />
+      <circle cx="50" cy="33" r="2.5" style={{ fill: 'var(--saffron)' }} />
 
       {/* Eyes */}
       <ellipse cx="43" cy="44" rx="4" ry="4.5" fill="#1a0805" />
@@ -45,10 +45,10 @@ function MayaAvatar({ size = 48 }: { size?: number }) {
       <ellipse cx="50" cy="50" rx="2" ry="1.5" fill="#b06040" />
 
       {/* Dupatta hint — saffron color at shoulders */}
-      <path d="M32 66 Q50 72 68 66 L68 80 Q50 86 32 80 Z" fill="rgba(255,153,51,0.6)" />
+      <path d="M32 66 Q50 72 68 66 L68 80 Q50 86 32 80 Z" fill="rgba(var(--accent-rgb),0.6)" />
 
       {/* Mekhela chador pattern detail */}
-      <path d="M32 72 L68 72" stroke="rgba(255,255,255,0.3)" strokeWidth="0.8" />
+      <path d="M32 72 L68 72" stroke="rgba(var(--fg-rgb),0.3)" strokeWidth="0.8" />
     </svg>
   )
 }
@@ -64,7 +64,7 @@ function TypingDots() {
             width: 7,
             height: 7,
             borderRadius: '50%',
-            background: 'rgba(0,255,65,0.6)',
+            background: 'rgba(var(--accent2-rgb),0.6)',
             display: 'inline-block',
             animation: 'maya-dot-bounce 1.2s infinite ease-in-out',
             animationDelay: `${i * 0.2}s`,
@@ -129,8 +129,8 @@ export default function MayaChat() {
         gap: '20px',
         marginBottom: '24px',
         padding: '20px 24px',
-        background: 'rgba(255,153,51,0.04)',
-        border: '1px solid rgba(255,153,51,0.15)',
+        background: 'rgba(var(--accent-rgb),0.04)',
+        border: '1px solid rgba(var(--accent-rgb),0.15)',
         clipPath: 'polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%)',
       }}>
         {/* Avatar */}
@@ -144,9 +144,9 @@ export default function MayaChat() {
             width: 13,
             height: 13,
             borderRadius: '50%',
-            background: '#00ff41',
-            border: '2px solid #0a0a0f',
-            boxShadow: '0 0 6px #00ff41',
+            background: 'var(--neon-green)',
+            border: '2px solid var(--bg-dark)',
+            boxShadow: '0 0 6px var(--neon-green)',
           }} />
         </div>
 
@@ -154,8 +154,8 @@ export default function MayaChat() {
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
             <h2 style={{
-              fontFamily: "'Orbitron', sans-serif",
-              fontSize: '18px',
+              fontFamily: "var(--font-display)",
+              fontSize: 'calc(18px * var(--font-scale, 1))',
               letterSpacing: '3px',
               color: 'var(--neon-white)',
               margin: 0,
@@ -163,28 +163,28 @@ export default function MayaChat() {
               MAYA BORA
             </h2>
             <span style={{
-              fontFamily: "'Share Tech Mono', monospace",
-              fontSize: '11px',
-              color: 'rgba(0,180,255,0.7)',
+              fontFamily: "var(--font-mono)",
+              fontSize: 'calc(11px * var(--font-scale, 1))',
+              color: 'rgba(var(--accent3-rgb),0.7)',
               letterSpacing: '1px',
             }}>
               @maya_bora
             </span>
             <span style={{
-              fontFamily: "'Share Tech Mono', monospace",
-              fontSize: '10px',
-              color: '#00ff41',
+              fontFamily: "var(--font-mono)",
+              fontSize: 'calc(10px * var(--font-scale, 1))',
+              color: 'var(--neon-green)',
               letterSpacing: '1px',
-              textShadow: '0 0 8px #00ff41',
+              textShadow: '0 0 8px var(--neon-green)',
             }}>
               ● ONLINE
             </span>
           </div>
 
           <p style={{
-            fontFamily: "'Share Tech Mono', monospace",
-            fontSize: '12px',
-            color: 'rgba(255,255,255,0.65)',
+            fontFamily: "var(--font-mono)",
+            fontSize: 'calc(12px * var(--font-scale, 1))',
+            color: 'rgba(var(--fg-rgb),0.65)',
             margin: '6px 0 8px',
             letterSpacing: '0.5px',
             lineHeight: 1.6,
@@ -196,14 +196,14 @@ export default function MayaChat() {
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {['20 yrs', 'ESFJ', 'Guwahati, Assam', 'Figma lover', 'Bihu 🎶'].map((tag) => (
               <span key={tag} style={{
-                fontFamily: "'Share Tech Mono', monospace",
-                fontSize: '10px',
+                fontFamily: "var(--font-mono)",
+                fontSize: 'calc(10px * var(--font-scale, 1))',
                 padding: '3px 10px',
-                border: '1px solid rgba(255,153,51,0.3)',
-                color: 'rgba(255,153,51,0.8)',
+                border: '1px solid rgba(var(--accent-rgb),0.3)',
+                color: 'rgba(var(--accent-rgb),0.8)',
                 letterSpacing: '1px',
                 clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%)',
-                background: 'rgba(255,153,51,0.05)',
+                background: 'rgba(var(--accent-rgb),0.05)',
               }}>
                 {tag}
               </span>
@@ -228,9 +228,9 @@ export default function MayaChat() {
                 SAY HI TO MAYA — SHE'S WAITING! 🌸
               </p>
               <p style={{
-                fontFamily: "'Share Tech Mono', monospace",
-                fontSize: '11px',
-                color: 'rgba(255,255,255,0.35)',
+                fontFamily: "var(--font-mono)",
+                fontSize: 'calc(11px * var(--font-scale, 1))',
+                color: 'rgba(var(--fg-rgb),0.35)',
                 marginTop: '8px',
                 letterSpacing: '1px',
               }}>
@@ -245,10 +245,10 @@ export default function MayaChat() {
               >
                 {msg.role === 'assistant' && (
                   <div style={{
-                    fontFamily: "'Share Tech Mono', monospace",
-                    fontSize: '9px',
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 'calc(9px * var(--font-scale, 1))',
                     letterSpacing: '1.5px',
-                    color: 'rgba(0,255,65,0.5)',
+                    color: 'rgba(var(--accent2-rgb),0.5)',
                     marginBottom: '4px',
                   }}>
                     MAYA
@@ -266,8 +266,8 @@ export default function MayaChat() {
           {/* Error */}
           {error && (
             <div style={{
-              fontFamily: "'Share Tech Mono', monospace",
-              fontSize: '11px',
+              fontFamily: "var(--font-mono)",
+              fontSize: 'calc(11px * var(--font-scale, 1))',
               color: '#ff4444',
               padding: '8px 12px',
               border: '1px solid rgba(255,68,68,0.3)',

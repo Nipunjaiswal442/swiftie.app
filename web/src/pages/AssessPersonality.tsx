@@ -60,30 +60,30 @@ export default function AssessPersonality() {
           text-align: center;
         }
         .assess-label {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 11px;
+          font-family: var(--font-mono);
+          font-size: calc(11px * var(--font-scale, 1));
           letter-spacing: 4px;
           text-transform: uppercase;
           color: var(--saffron);
           margin-bottom: 12px;
         }
         .assess-title {
-          font-family: 'Orbitron', sans-serif;
+          font-family: var(--font-display);
           font-weight: 700;
-          font-size: clamp(20px, 3vw, 28px);
+          font-size: calc(clamp(20px, 3vw, 28px) * var(--font-scale, 1));
           letter-spacing: 4px;
           color: var(--neon-white);
           margin-bottom: 12px;
         }
         .assess-sub {
-          font-size: 14px;
+          font-size: calc(14px * var(--font-scale, 1));
           color: var(--text-dim);
           line-height: 1.6;
         }
         .progress-bar-wrap {
           margin: 24px 0;
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,153,51,0.15);
+          background: rgba(var(--fg-rgb),0.06);
+          border: 1px solid rgba(var(--accent-rgb),0.15);
           height: 6px;
           border-radius: 3px;
           overflow: hidden;
@@ -95,8 +95,8 @@ export default function AssessPersonality() {
           border-radius: 3px;
         }
         .progress-text {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 11px;
+          font-family: var(--font-mono);
+          font-size: calc(11px * var(--font-scale, 1));
           letter-spacing: 2px;
           color: var(--text-dim);
           text-align: right;
@@ -109,23 +109,23 @@ export default function AssessPersonality() {
         }
         .question-card {
           padding: 24px;
-          background: rgba(13,13,26,0.6);
-          border: 1px solid rgba(255,153,51,0.1);
+          background: rgba(var(--surface-rgb),0.6);
+          border: 1px solid rgba(var(--accent-rgb),0.1);
           transition: border-color 0.3s;
         }
         .question-card.answered {
-          border-color: rgba(0,255,65,0.2);
+          border-color: rgba(var(--accent2-rgb),0.2);
         }
         .question-num {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 10px;
+          font-family: var(--font-mono);
+          font-size: calc(10px * var(--font-scale, 1));
           letter-spacing: 2px;
           color: var(--saffron);
           margin-bottom: 10px;
         }
         .question-text {
-          font-family: 'Rajdhani', sans-serif;
-          font-size: 16px;
+          font-family: var(--font-body);
+          font-size: calc(16px * var(--font-scale, 1));
           color: var(--neon-white);
           margin-bottom: 20px;
           line-height: 1.5;
@@ -151,14 +151,14 @@ export default function AssessPersonality() {
           width: 36px;
           height: 36px;
           border-radius: 50%;
-          border: 2px solid rgba(255,153,51,0.3);
+          border: 2px solid rgba(var(--accent-rgb),0.3);
           background: transparent;
           transition: all 0.2s;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 12px;
+          font-family: var(--font-mono);
+          font-size: calc(12px * var(--font-scale, 1));
           color: var(--text-dim);
         }
         .scale-option:hover .scale-dot {
@@ -168,12 +168,12 @@ export default function AssessPersonality() {
         .scale-option input:checked ~ .scale-dot {
           background: var(--saffron);
           border-color: var(--saffron);
-          color: var(--bg-dark);
-          box-shadow: 0 0 12px rgba(255,153,51,0.4);
+          color: var(--on-accent);
+          box-shadow: 0 0 12px rgba(var(--accent-rgb),0.4);
         }
         .scale-label-text {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 9px;
+          font-family: var(--font-mono);
+          font-size: calc(9px * var(--font-scale, 1));
           letter-spacing: 0.5px;
           color: var(--text-dim);
           text-align: center;
@@ -188,8 +188,8 @@ export default function AssessPersonality() {
           gap: 16px;
         }
         .assess-error {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 12px;
+          font-family: var(--font-mono);
+          font-size: calc(12px * var(--font-scale, 1));
           letter-spacing: 1px;
           color: #ff4444;
           text-align: center;
@@ -199,12 +199,12 @@ export default function AssessPersonality() {
           align-items: center;
           gap: 12px;
           padding: 16px 48px;
-          font-family: 'Orbitron', sans-serif;
+          font-family: var(--font-display);
           font-weight: 700;
-          font-size: 14px;
+          font-size: calc(14px * var(--font-scale, 1));
           letter-spacing: 4px;
           text-transform: uppercase;
-          color: var(--bg-dark);
+          color: var(--on-accent);
           background: linear-gradient(135deg, var(--saffron), var(--green-glow));
           border: none;
           cursor: pointer;
@@ -219,11 +219,11 @@ export default function AssessPersonality() {
         }
         .assess-submit-btn:not(:disabled):hover {
           transform: translateY(-2px);
-          box-shadow: 0 0 24px rgba(255,153,51,0.4);
+          box-shadow: 0 0 24px rgba(var(--accent-rgb),0.4);
         }
         @media (max-width: 600px) {
-          .scale-dot { width: 28px; height: 28px; font-size: 10px; }
-          .scale-label-text { font-size: 8px; }
+          .scale-dot { width: 28px; height: 28px; font-size: calc(10px * var(--font-scale, 1)); }
+          .scale-label-text { font-size: calc(8px * var(--font-scale, 1)); }
         }
       `}</style>
 
@@ -277,7 +277,7 @@ export default function AssessPersonality() {
           {submitting ? 'CALCULATING...' : 'GET MY RESULT ➔'}
         </button>
         {!allAnswered && (
-          <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: '11px', color: 'var(--text-dim)', letterSpacing: '1px' }}>
+          <p style={{ fontFamily: "var(--font-mono)", fontSize: 'calc(11px * var(--font-scale, 1))', color: 'var(--text-dim)', letterSpacing: '1px' }}>
             {total - answered} question{total - answered !== 1 ? 's' : ''} remaining
           </p>
         )}

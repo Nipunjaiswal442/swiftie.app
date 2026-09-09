@@ -19,7 +19,7 @@ export default function Login() {
   useEffect(() => {
     const container = particlesRef.current
     if (!container) return
-    const colors = ['#FF9933', '#FFFFFF', '#00FF41', '#0044FF', '#FFB347', '#00FF6A']
+    const colors = ['var(--saffron)', 'var(--white-pure)', 'var(--neon-green)', 'var(--navy-glow)', 'var(--saffron-glow)', 'var(--green-glow)']
     for (let i = 0; i < 30; i++) {
       const p = document.createElement('div')
       p.className = 'particle'
@@ -76,7 +76,7 @@ export default function Login() {
             .terms-row { margin: 20px 0 4px; text-align: left; }
             .terms-label { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
             .terms-checkbox { margin-top: 3px; flex-shrink: 0; width: 16px; height: 16px; accent-color: var(--saffron); cursor: pointer; }
-            .terms-text { font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 0.5px; color: var(--text-dim); line-height: 1.7; }
+            .terms-text { font-family: var(--font-mono); font-size: calc(10px * var(--font-scale, 1)); letter-spacing: 0.5px; color: var(--text-dim); line-height: 1.7; }
           `}</style>
 
           <div className="terms-row">
@@ -99,7 +99,7 @@ export default function Login() {
             disabled={!termsAccepted || loading}
           >
             {loading ? (
-              <span style={{ fontFamily: "'Share Tech Mono'", fontSize: '12px', letterSpacing: '2px' }}>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 'calc(12px * var(--font-scale, 1))', letterSpacing: '2px' }}>
                 AUTHENTICATING...
               </span>
             ) : (

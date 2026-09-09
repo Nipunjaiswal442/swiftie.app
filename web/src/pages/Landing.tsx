@@ -10,7 +10,7 @@ export default function Landing() {
   useEffect(() => {
     const container = particlesRef.current
     if (!container) return
-    const colors = ['#FF9933', '#FFFFFF', '#00FF41', '#0044FF', '#FFB347', '#00FF6A']
+    const colors = ['var(--saffron)', 'var(--white-pure)', 'var(--neon-green)', 'var(--navy-glow)', 'var(--saffron-glow)', 'var(--green-glow)']
     for (let i = 0; i < 50; i++) {
       const p = document.createElement('div')
       p.className = 'particle'
@@ -95,9 +95,9 @@ export default function Landing() {
       <section className="hero-section">
         <div className="chakra-container">
           <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(0,68,204,0.3)" strokeWidth="2" />
-            <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(0,68,204,0.5)" strokeWidth="1.5" />
-            <circle cx="100" cy="100" r="15" fill="rgba(0,68,204,0.6)" stroke="rgba(0,120,255,0.8)" strokeWidth="1" />
+            <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(var(--accent3-deep-rgb),0.3)" strokeWidth="2" />
+            <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(var(--accent3-deep-rgb),0.5)" strokeWidth="1.5" />
+            <circle cx="100" cy="100" r="15" fill="rgba(var(--accent3-deep-rgb),0.6)" stroke="rgba(0,120,255,0.8)" strokeWidth="1" />
             <g stroke="rgba(0,100,255,0.6)" strokeWidth="1.5">
               <line x1="100" y1="20" x2="100" y2="85" /><line x1="100" y1="115" x2="100" y2="180" />
               <line x1="20" y1="100" x2="85" y2="100" /><line x1="115" y1="100" x2="180" y2="100" />
@@ -330,7 +330,7 @@ export default function Landing() {
         </h2>
         <p className="final-sub">Join India&apos;s first personality-driven community platform.</p>
         <button className="cta-btn-large" onClick={() => navigate('/login')}>
-          USE SWIFTIE <span className="cta-arrow" style={{ fontSize: '22px' }}>&#10140;</span>
+          USE SWIFTIE <span className="cta-arrow" style={{ fontSize: 'calc(22px * var(--font-scale, 1))' }}>&#10140;</span>
         </button>
       </section>
 
@@ -346,6 +346,7 @@ export default function Landing() {
           <a href="#">DPDP COMPLIANCE</a>
           <a href="https://github.com/Nipunjaiswal442/swiftie.app" target="_blank" rel="noreferrer">GITHUB</a>
           <a href="#">CONTACT</a>
+          <a href="/admin">ADMIN</a>
         </div>
         <p className="made-in-india">
           🇮🇳 Designed &amp; Engineered in India by Nipun Jaiswal

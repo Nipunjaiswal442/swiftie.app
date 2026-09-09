@@ -96,7 +96,7 @@ export default function ApplyToCommunity() {
         <div className="empty-state">
           <div className="empty-state-icon">🏛️</div>
           <p className="empty-state-text">COMMUNITY NOT FOUND</p>
-          <Link to="/explore" style={{ color: 'var(--saffron)', fontFamily: "'Share Tech Mono'", fontSize: '11px', letterSpacing: '2px' }}>← EXPLORE</Link>
+          <Link to="/explore" style={{ color: 'var(--saffron)', fontFamily: "var(--font-mono)", fontSize: 'calc(11px * var(--font-scale, 1))', letterSpacing: '2px' }}>← EXPLORE</Link>
         </div>
       </div>
     )
@@ -107,14 +107,14 @@ export default function ApplyToCommunity() {
     return (
       <div className="app-content">
         <div style={{ maxWidth: '560px', margin: '60px auto', textAlign: 'center' }}>
-          <div style={{ fontSize: '48px', marginBottom: '20px' }}>{community.icon}</div>
-          <h2 style={{ fontFamily: "'Orbitron', sans-serif", color: 'var(--neon-green)', letterSpacing: '3px', marginBottom: '12px' }}>
+          <div style={{ fontSize: 'calc(48px * var(--font-scale, 1))', marginBottom: '20px' }}>{community.icon}</div>
+          <h2 style={{ fontFamily: "var(--font-display)", color: 'var(--neon-green)', letterSpacing: '3px', marginBottom: '12px' }}>
             YOU'RE IN!
           </h2>
-          <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: '11px', letterSpacing: '2px', color: 'rgba(0,255,65,0.8)', marginBottom: '24px' }}>
+          <p style={{ fontFamily: "var(--font-mono)", fontSize: 'calc(11px * var(--font-scale, 1))', letterSpacing: '2px', color: 'rgba(var(--accent2-rgb),0.8)', marginBottom: '24px' }}>
             Auto-approved · Redirecting to community chat…
           </p>
-          <p style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '15px', color: 'rgba(224,224,255,0.7)', lineHeight: 1.6 }}>
+          <p style={{ fontFamily: "var(--font-body)", fontSize: 'calc(15px * var(--font-scale, 1))', color: 'rgba(var(--text-rgb),0.7)', lineHeight: 1.6 }}>
             You've been added to <strong style={{ color: sectionColor }}>{community.name}</strong>. Welcome!
           </p>
         </div>
@@ -126,22 +126,22 @@ export default function ApplyToCommunity() {
     return (
       <div className="app-content">
         <div style={{ maxWidth: '560px', margin: '60px auto', textAlign: 'center' }}>
-          <div style={{ fontSize: '48px', marginBottom: '20px' }}>📬</div>
-          <h2 style={{ fontFamily: "'Orbitron', sans-serif", color: 'var(--saffron)', letterSpacing: '3px', marginBottom: '12px' }}>
+          <div style={{ fontSize: 'calc(48px * var(--font-scale, 1))', marginBottom: '20px' }}>📬</div>
+          <h2 style={{ fontFamily: "var(--font-display)", color: 'var(--saffron)', letterSpacing: '3px', marginBottom: '12px' }}>
             APPLICATION SUBMITTED
           </h2>
-          <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: '11px', letterSpacing: '1.5px', color: 'var(--text-dim)', marginBottom: '24px', lineHeight: 1.8 }}>
+          <p style={{ fontFamily: "var(--font-mono)", fontSize: 'calc(11px * var(--font-scale, 1))', letterSpacing: '1.5px', color: 'var(--text-dim)', marginBottom: '24px', lineHeight: 1.8 }}>
             Your application to join <span style={{ color: sectionColor }}>{community.name}</span> is under review.
             A moderator will review it shortly.
           </p>
           <Link to="/explore" style={{
-            fontFamily: "'Orbitron', sans-serif",
-            fontSize: '10px',
+            fontFamily: "var(--font-display)",
+            fontSize: 'calc(10px * var(--font-scale, 1))',
             letterSpacing: '2px',
             color: 'var(--saffron)',
             textDecoration: 'none',
             padding: '8px 20px',
-            border: '1px solid rgba(255,153,51,0.3)',
+            border: '1px solid rgba(var(--accent-rgb),0.3)',
             clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%)',
           }}>← BACK TO EXPLORE</Link>
         </div>
@@ -158,16 +158,16 @@ export default function ApplyToCommunity() {
           margin-bottom: 28px;
         }
         .apply-q-label {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 10px;
+          font-family: var(--font-mono);
+          font-size: calc(10px * var(--font-scale, 1));
           letter-spacing: 2px;
           color: var(--text-dim);
           margin-bottom: 8px;
           display: block;
         }
         .apply-q-text {
-          font-family: 'Rajdhani', sans-serif;
-          font-size: 16px;
+          font-family: var(--font-body);
+          font-size: calc(16px * var(--font-scale, 1));
           font-weight: 600;
           color: var(--neon-white);
           margin-bottom: 12px;
@@ -176,11 +176,11 @@ export default function ApplyToCommunity() {
         .apply-textarea {
           width: 100%;
           padding: 12px 14px;
-          background: rgba(13,13,26,0.7);
-          border: 1px solid rgba(255,255,255,0.1);
+          background: rgba(var(--surface-rgb),0.7);
+          border: 1px solid rgba(var(--fg-rgb),0.1);
           color: var(--neon-white);
-          font-family: 'Rajdhani', sans-serif;
-          font-size: 15px;
+          font-family: var(--font-body);
+          font-size: calc(15px * var(--font-scale, 1));
           line-height: 1.5;
           resize: vertical;
           outline: none;
@@ -188,11 +188,11 @@ export default function ApplyToCommunity() {
           min-height: 100px;
           transition: border-color 0.2s;
         }
-        .apply-textarea:focus { border-color: rgba(255,153,51,0.3); }
+        .apply-textarea:focus { border-color: rgba(var(--accent-rgb),0.3); }
         .apply-textarea::placeholder { color: var(--text-dim); }
         .apply-char-hint {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 9px;
+          font-family: var(--font-mono);
+          font-size: calc(9px * var(--font-scale, 1));
           letter-spacing: 1px;
           color: var(--text-dim);
           margin-top: 4px;
@@ -207,26 +207,26 @@ export default function ApplyToCommunity() {
           align-items: center;
           gap: 12px;
           padding: 10px 14px;
-          background: rgba(13,13,26,0.5);
-          border: 1px solid rgba(255,255,255,0.07);
+          background: rgba(var(--surface-rgb),0.5);
+          border: 1px solid rgba(var(--fg-rgb),0.07);
           cursor: pointer;
           transition: background 0.15s, border-color 0.15s;
-          font-family: 'Rajdhani', sans-serif;
-          font-size: 15px;
-          color: rgba(224,224,255,0.8);
+          font-family: var(--font-body);
+          font-size: calc(15px * var(--font-scale, 1));
+          color: rgba(var(--text-rgb),0.8);
           user-select: none;
         }
         .apply-radio-option.selected {
-          background: rgba(255,153,51,0.08);
-          border-color: rgba(255,153,51,0.3);
+          background: rgba(var(--accent-rgb),0.08);
+          border-color: rgba(var(--accent-rgb),0.3);
           color: var(--neon-white);
         }
-        .apply-radio-option:hover { background: rgba(255,255,255,0.04); }
+        .apply-radio-option:hover { background: rgba(var(--fg-rgb),0.04); }
         .apply-radio-dot {
           width: 14px;
           height: 14px;
           border-radius: 50%;
-          border: 2px solid rgba(255,255,255,0.2);
+          border: 2px solid rgba(var(--fg-rgb),0.2);
           flex-shrink: 0;
           display: flex;
           align-items: center;
@@ -244,16 +244,16 @@ export default function ApplyToCommunity() {
           background: var(--saffron);
         }
         .apply-submit-btn {
-          font-family: 'Orbitron', sans-serif;
+          font-family: var(--font-display);
           font-weight: 600;
-          font-size: 12px;
+          font-size: calc(12px * var(--font-scale, 1));
           letter-spacing: 2px;
           padding: 14px 32px;
           border: none;
           cursor: pointer;
           clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
           transition: opacity 0.2s;
-          color: var(--bg-dark);
+          color: var(--on-accent);
         }
         .apply-submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         .apply-submit-btn:not(:disabled):hover { opacity: 0.85; }
@@ -261,7 +261,7 @@ export default function ApplyToCommunity() {
 
       {/* Page header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-        <Link to="/explore" style={{ fontFamily: "'Share Tech Mono'", fontSize: '11px', letterSpacing: '2px', color: 'var(--text-dim)', textDecoration: 'none' }}>
+        <Link to="/explore" style={{ fontFamily: "var(--font-mono)", fontSize: 'calc(11px * var(--font-scale, 1))', letterSpacing: '2px', color: 'var(--text-dim)', textDecoration: 'none' }}>
           ← EXPLORE
         </Link>
       </div>
@@ -269,16 +269,16 @@ export default function ApplyToCommunity() {
       <div style={{
         display: 'flex', alignItems: 'center', gap: '16px',
         padding: '18px 20px', marginBottom: '28px',
-        background: 'rgba(13,13,26,0.5)',
+        background: 'rgba(var(--surface-rgb),0.5)',
         border: `1px solid ${sectionColor}33`,
         clipPath: 'polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%)',
       }}>
-        <span style={{ fontSize: '32px' }}>{community.icon}</span>
+        <span style={{ fontSize: 'calc(32px * var(--font-scale, 1))' }}>{community.icon}</span>
         <div>
-          <div style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: '14px', letterSpacing: '3px', color: sectionColor }}>
+          <div style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 'calc(14px * var(--font-scale, 1))', letterSpacing: '3px', color: sectionColor }}>
             {community.name}
           </div>
-          <div style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: '10px', letterSpacing: '1px', color: 'var(--text-dim)', marginTop: '3px' }}>
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: 'calc(10px * var(--font-scale, 1))', letterSpacing: '1px', color: 'var(--text-dim)', marginTop: '3px' }}>
             {community.memberCount} members · {community.matchKey?.toUpperCase() ?? community.section.toUpperCase()} · {community.section.toUpperCase()}
           </div>
         </div>
@@ -390,8 +390,8 @@ export default function ApplyToCommunity() {
             padding: '12px 16px', marginBottom: '20px',
             background: 'rgba(255,51,51,0.08)',
             border: '1px solid rgba(255,51,51,0.25)',
-            fontFamily: "'Share Tech Mono', monospace",
-            fontSize: '11px', letterSpacing: '1px',
+            fontFamily: "var(--font-mono)",
+            fontSize: 'calc(11px * var(--font-scale, 1))', letterSpacing: '1px',
             color: 'rgba(255,100,100,0.9)',
           }}>
             {error}
@@ -402,7 +402,7 @@ export default function ApplyToCommunity() {
           type="submit"
           className="apply-submit-btn"
           disabled={submitting}
-          style={{ background: sectionColor === 'var(--white-pure)' ? 'rgba(255,255,255,0.9)' : sectionColor }}
+          style={{ background: sectionColor === 'var(--white-pure)' ? 'rgba(var(--fg-rgb),0.9)' : sectionColor }}
         >
           {submitting ? 'SUBMITTING...' : 'SUBMIT APPLICATION ➔'}
         </button>

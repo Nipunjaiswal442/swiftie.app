@@ -1,7 +1,37 @@
-import { useNavigate, useParams } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import UserAvatar from '../components/UserAvatar'
+import PostCard from '../components/PostCard'
+import FollowButton from '../components/FollowButton'
+import ReportButton from '../components/ReportModal'
+import UserListModal from '../components/UserListModal'
+import { labelFor, OCCUPATION_SCORE_LABELS, SCORE_PAIRS, SECTION_META } from '../data/resultLabels'
+import { errorMessage, formatDate } from '../lib/format'
+
+type Section = 'personality' | 'ideology' | 'occupation'
+const SECTION_ORDER: Section[] = ['personality', 'ideology', 'occupation']
+
+/** Two-sided bar for E/I-style pairs. */
+function PairBar({ left, right, leftLabel, rightLabel, color }: { left: number; right: number; leftLabel: string; rightLabel: string; color: string }) {
+  const total = left + right
+  const pct = total === 0 ? 50 : Math.round((left / total) * 100)
+  const leftWins = pct >= 50
+  const label: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'calc(9px * var(--font-scale, 1))', letterSpacing: '1px' }
+  return (
+    <div style={{ marginBottom: '8px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
+        <span style={{ ...label, color: leftWins ? color : 'var(--text-dim)' }}>{leftLabel.toUpperCase()} {pct}%</span>
+        <span style={{ ...label, color: leftWins ? 'var(--text-dim)' : color }}>{100 - pct}% {rightLabel.toUpperCase()}</span>
+      </div>
+      <div style={{ height: '6px', background: 'rgba(var(--fg-rgb),0.08)', display: 'flex' }}>
+        <div style={{ width: `${pct}%`, background: leftWins ? color : 'rgba(var(--fg-rgb),0.25)', transition: 'width 0.4s' }} />
+        <div style={{ flex: 1, background: leftWins ? 'rgba(var(--fg-rgb),0.25)' : color }} />
+      </div>
+    </div>
+  )
+}
 
 export default function Profile() {
   const { username } = useParams<{ username: string }>()
@@ -9,22 +39,23 @@ export default function Profile() {
 
   const me = useQuery(api.users.getMe)
   const profile = useQuery(api.users.getByUsername, username ? { username } : 'skip')
-  const followUser = useMutation(api.users.follow)
-  const unfollowUser = useMutation(api.users.unfollow)
+  const posts = useQuery(api.posts.getByUser, profile ? { userId: profile._id } : 'skip')
+  const results = useQuery(api.assessments.getResultsForUser, profile ? { userId: profile._id } : 'skip')
   const startConversation = useMutation(api.messages.getOrCreateConversation)
 
-  const isMe = me?.username === username
+  const [listTab, setListTab] = useState<'followers' | 'following' | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleFollow = async () => {
-    if (!profile) return
-    if (profile.isFollowing) await unfollowUser({ userId: profile._id })
-    else await followUser({ userId: profile._id })
-  }
+  const isMe = !!profile && me?._id === profile._id
 
   const handleMessage = async () => {
     if (!profile) return
-    const convId = await startConversation({ otherUserId: profile._id })
-    navigate(`/chat/${convId}`)
+    try {
+      const convId = await startConversation({ otherUserId: profile._id })
+      navigate(`/chat/${convId}`)
+    } catch (err) {
+      setError(errorMessage(err))
+    }
   }
 
   if (profile === undefined) {
@@ -52,11 +83,11 @@ export default function Profile() {
   const tagChipStyle: React.CSSProperties = {
     display: 'inline-block',
     padding: '3px 10px',
-    background: 'rgba(255,153,51,0.08)',
-    border: '1px solid rgba(255,153,51,0.25)',
+    background: 'rgba(var(--accent-rgb),0.08)',
+    border: '1px solid rgba(var(--accent-rgb),0.25)',
     clipPath: 'polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 0 100%)',
-    fontFamily: "'Share Tech Mono', monospace",
-    fontSize: '10px',
+    fontFamily: 'var(--font-mono)',
+    fontSize: 'calc(10px * var(--font-scale, 1))',
     letterSpacing: '1px',
     color: 'var(--saffron)',
   }
@@ -65,13 +96,17 @@ export default function Profile() {
     alignItems: 'center',
     gap: '5px',
     padding: '4px 10px',
-    background: 'rgba(13,13,26,0.6)',
+    background: 'rgba(var(--surface-rgb),0.6)',
     border: '1px solid',
     clipPath: 'polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%)',
-    fontFamily: "'Share Tech Mono', monospace",
-    fontSize: '10px',
+    fontFamily: 'var(--font-mono)',
+    fontSize: 'calc(10px * var(--font-scale, 1))',
     letterSpacing: '1.5px',
   }
+  const mono: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'calc(10px * var(--font-scale, 1))', letterSpacing: '1px', color: 'var(--text-dim)' }
+
+  const resultBySection = new Map((results ?? []).map((r) => [r.section, r]))
+  const missingSections = SECTION_ORDER.filter((s) => !resultBySection.has(s))
 
   return (
     <div className="app-content">
@@ -80,124 +115,81 @@ export default function Profile() {
         height: '140px',
         background: profile.coverPhotoUrl
           ? `url(${profile.coverPhotoUrl}) center/cover`
-          : 'linear-gradient(135deg, rgba(255,153,51,0.12), rgba(0,255,65,0.06))',
-        borderBottom: '1px solid rgba(255,153,51,0.08)',
+          : 'linear-gradient(135deg, rgba(var(--accent-rgb),0.12), rgba(var(--accent2-rgb),0.06))',
+        borderBottom: '1px solid rgba(var(--accent-rgb),0.08)',
         marginBottom: '0',
       }} />
 
-      {/* Maya-style profile header card */}
+      {/* Profile header card */}
       <div style={{
         display: 'flex',
         alignItems: 'flex-start',
         gap: '20px',
         padding: '20px 24px 22px',
-        background: 'rgba(255,153,51,0.03)',
-        border: '1px solid rgba(255,153,51,0.13)',
+        background: 'rgba(var(--accent-rgb),0.03)',
+        border: '1px solid rgba(var(--accent-rgb),0.13)',
         clipPath: 'polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%)',
         marginBottom: '24px',
         position: 'relative',
         marginTop: '-40px',
       }}>
-        {/* Avatar with online dot */}
         <div style={{ position: 'relative', flexShrink: 0 }}>
           <UserAvatar user={profile} size={72} />
-          {profile.isOnline && (
-            <span style={{
-              position: 'absolute', bottom: 4, right: 4,
-              width: '12px', height: '12px', borderRadius: '50%',
-              background: '#00ff41',
-              boxShadow: '0 0 8px #00ff41, 0 0 16px rgba(0,255,65,0.4)',
-              border: '2px solid var(--bg-dark)',
-            }} />
-          )}
+          <span className={`online-dot${profile.isOnline ? '' : ' off'}`} style={{ bottom: 4, right: 4 }} />
         </div>
 
-        {/* Info column */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Name + username + online row */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '4px' }}>
-            <h2 style={{
-              fontFamily: "'Orbitron', sans-serif",
-              fontWeight: 700,
-              fontSize: '17px',
-              letterSpacing: '2px',
-              color: 'var(--neon-white)',
-              margin: 0,
-            }}>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'calc(17px * var(--font-scale, 1))', letterSpacing: '2px', color: 'var(--neon-white)', margin: 0 }}>
               {profile.displayName}
             </h2>
-            <span style={{
-              fontFamily: "'Share Tech Mono', monospace",
-              fontSize: '12px',
-              color: 'rgba(0,180,255,0.75)',
-              letterSpacing: '1px',
-            }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'calc(12px * var(--font-scale, 1))', color: 'rgba(var(--accent3-rgb),0.75)', letterSpacing: '1px' }}>
               @{profile.username}
             </span>
-            {profile.isOnline && (
-              <span style={{
-                fontFamily: "'Share Tech Mono', monospace",
-                fontSize: '9px',
-                letterSpacing: '2px',
-                color: '#00ff41',
-                textShadow: '0 0 8px #00ff41',
-              }}>● ONLINE</span>
-            )}
+            {profile.isOnline ? (
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'calc(9px * var(--font-scale, 1))', letterSpacing: '2px', color: 'var(--neon-green)', textShadow: '0 0 8px var(--neon-green)' }}>● ONLINE</span>
+            ) : profile.lastSeen ? (
+              <span style={mono}>LAST SEEN {formatDate(profile.lastSeen).toUpperCase()}</span>
+            ) : null}
+            {profile.followsMe && !isMe && <span className="status-chip active">FOLLOWS YOU</span>}
+            {profile.status === 'suspended' && <span className="status-chip suspended">SUSPENDED</span>}
           </div>
 
-          {/* Role / location / pronouns subline */}
-          {((profile as any).currentRole || (profile as any).location || (profile as any).pronouns) && (
-            <p style={{
-              fontFamily: "'Share Tech Mono', monospace",
-              fontSize: '11px',
-              color: 'rgba(255,255,255,0.55)',
-              margin: '0 0 8px',
-              letterSpacing: '0.5px',
-            }}>
-              {[(profile as any).currentRole, (profile as any).location, (profile as any).pronouns]
-                .filter(Boolean)
-                .join(' · ')}
+          {(profile.currentRole || profile.location || profile.pronouns) && (
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 'calc(11px * var(--font-scale, 1))', color: 'rgba(var(--fg-rgb),0.55)', margin: '0 0 8px', letterSpacing: '0.5px' }}>
+              {[profile.currentRole, profile.location, profile.pronouns].filter(Boolean).join(' · ')}
             </p>
           )}
 
-          {/* Bio */}
           {profile.bio && (
-            <p style={{
-              fontFamily: "'Rajdhani', sans-serif",
-              fontSize: '14px',
-              color: 'rgba(224,224,255,0.75)',
-              margin: '0 0 10px',
-              lineHeight: 1.5,
-            }}>
+            <p style={{ fontFamily: 'var(--font-body)', fontSize: 'calc(14px * var(--font-scale, 1))', color: 'rgba(var(--text-rgb),0.75)', margin: '0 0 10px', lineHeight: 1.5 }}>
               {profile.bio}
             </p>
           )}
 
-          {/* Interest tag chips */}
-          {(profile as any).interests && (profile as any).interests.length > 0 && (
+          {profile.interests && profile.interests.length > 0 && (
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
-              {(profile as any).interests.map((tag: string) => (
+              {profile.interests.map((tag) => (
                 <span key={tag} style={tagChipStyle}>{tag}</span>
               ))}
             </div>
           )}
 
-          {/* Assessment result badges */}
-          {((profile as any).personalityResult || (profile as any).ideologyResult || (profile as any).occupationResult) && (
+          {(profile.personalityResult || profile.ideologyResult || profile.occupationResult) && (
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {(profile as any).personalityResult && (
-                <span style={{ ...badgeStyle, borderColor: 'rgba(255,153,51,0.4)', color: 'var(--saffron)' }}>
-                  🧠 {(profile as any).personalityResult.toUpperCase()}
+              {profile.personalityResult && (
+                <span style={{ ...badgeStyle, borderColor: 'rgba(var(--accent-rgb),0.4)', color: 'var(--saffron)' }}>
+                  🧠 {profile.personalityResult.toUpperCase()}
                 </span>
               )}
-              {(profile as any).ideologyResult && (
-                <span style={{ ...badgeStyle, borderColor: 'rgba(255,255,255,0.25)', color: 'var(--white-pure)' }}>
-                  ⚐ {(profile as any).ideologyResult.toUpperCase()}
+              {profile.ideologyResult && (
+                <span style={{ ...badgeStyle, borderColor: 'rgba(var(--fg-rgb),0.25)', color: 'var(--white-pure)' }}>
+                  ⚐ {profile.ideologyResult.toUpperCase()}
                 </span>
               )}
-              {(profile as any).occupationResult && (
-                <span style={{ ...badgeStyle, borderColor: 'rgba(0,255,65,0.3)', color: 'var(--neon-green)' }}>
-                  🔧 {(profile as any).occupationResult.toUpperCase()}
+              {profile.occupationResult && (
+                <span style={{ ...badgeStyle, borderColor: 'rgba(var(--accent2-rgb),0.3)', color: 'var(--neon-green)' }}>
+                  🔧 {profile.occupationResult.toUpperCase()}
                 </span>
               )}
             </div>
@@ -207,50 +199,134 @@ export default function Profile() {
 
       {/* Stats + action buttons */}
       <div className="card" style={{ padding: '16px 24px' }}>
-        <div className="profile-stats" style={{ marginBottom: isMe ? 0 : '16px' }}>
+        <div className="profile-stats" style={{ marginBottom: '16px' }}>
           <div className="profile-stat">
             <div className="profile-stat-num">{profile.postsCount}</div>
             <div className="profile-stat-label">POSTS</div>
           </div>
-          <div className="profile-stat">
+          <button className="profile-stat" style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => setListTab('followers')}>
             <div className="profile-stat-num">{profile.followersCount}</div>
             <div className="profile-stat-label">FOLLOWERS</div>
-          </div>
-          <div className="profile-stat">
+          </button>
+          <button className="profile-stat" style={{ background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => setListTab('following')}>
             <div className="profile-stat-num">{profile.followingCount}</div>
             <div className="profile-stat-label">FOLLOWING</div>
-          </div>
+          </button>
         </div>
 
-        {!isMe && (
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button
-              className={`follow-btn ${profile.isFollowing ? 'following' : ''}`}
-              onClick={handleFollow}
-            >
-              {profile.isFollowing ? 'FOLLOWING' : 'FOLLOW'}
-            </button>
-            <button
-              className="follow-btn"
-              style={{ borderColor: 'rgba(0,68,204,0.5)', color: 'rgba(0,180,255,0.8)' }}
-              onClick={handleMessage}
-            >
-              MESSAGE
-            </button>
-          </div>
-        )}
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+          {isMe ? (
+            <>
+              <Link to="/settings#profile" className="follow-btn" style={{ textDecoration: 'none', display: 'inline-block' }}>EDIT PROFILE</Link>
+              <Link to="/settings" className="ghost-btn" style={{ textDecoration: 'none' }}>⚙ SETTINGS</Link>
+            </>
+          ) : (
+            <>
+              <FollowButton userId={profile._id} isFollowing={profile.isFollowing} size="md" />
+              <button
+                className="follow-btn"
+                style={{ borderColor: 'rgba(var(--accent3-deep-rgb),0.5)', color: 'rgba(var(--accent3-rgb),0.8)' }}
+                onClick={handleMessage}
+              >
+                MESSAGE
+              </button>
+              <ReportButton targetType="user" targetId={profile._id} targetLabel={`@${profile.username}`} />
+            </>
+          )}
+        </div>
+        {error && <p className="error-msg">{error}</p>}
       </div>
 
-      {/* Posts section */}
-      <p className="page-title" style={{ marginTop: '32px' }}>
-        // <span>POSTS</span>
-      </p>
-      <div className="empty-state" style={{ padding: '40px 20px' }}>
-        <div className="empty-state-icon" style={{ fontSize: '32px' }}>📷</div>
-        <p className="empty-state-text" style={{ fontSize: '11px' }}>
-          {profile.postsCount === 0 ? 'NO POSTS YET' : `${profile.postsCount} POST${profile.postsCount > 1 ? 'S' : ''}`}
-        </p>
-      </div>
+      {/* Assessment insights — filled in automatically after each assessment */}
+      <p className="page-title" style={{ marginTop: '32px' }}>// <span>ASSESSMENT INSIGHTS</span></p>
+      {results === undefined ? (
+        <p style={mono}>LOADING…</p>
+      ) : results.length === 0 ? (
+        <div className="empty-state" style={{ padding: '32px 20px' }}>
+          <div className="empty-state-icon" style={{ fontSize: 'calc(32px * var(--font-scale, 1))' }}>🧭</div>
+          <p className="empty-state-text" style={{ fontSize: 'calc(11px * var(--font-scale, 1))' }}>
+            {isMe ? 'TAKE AN ASSESSMENT — RESULTS APPEAR HERE AUTOMATICALLY' : 'NO ASSESSMENTS COMPLETED YET'}
+          </p>
+          {isMe && <Link to="/discover" className="tab-empty-link" style={{ display: 'inline-block', marginTop: '12px' }}>GO TO DISCOVER →</Link>}
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px' }}>
+          {SECTION_ORDER.map((section) => {
+            const r = resultBySection.get(section)
+            if (!r) return null
+            const meta = SECTION_META[section]
+            const label = labelFor(section, r.matchKey)
+            return (
+              <div key={section} className="card" style={{ padding: '18px 20px' }}>
+                <p style={{ ...mono, marginBottom: '6px' }}>{meta.icon} {meta.label} · {formatDate(r.completedAt).toUpperCase()}</p>
+                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 'calc(15px * var(--font-scale, 1))', letterSpacing: '2px', color: meta.color, margin: '0 0 4px' }}>
+                  {r.matchKey.toUpperCase()} · {label.title.toUpperCase()}
+                </h3>
+                {label.blurb && (
+                  <p style={{ fontFamily: 'var(--font-body)', fontSize: 'calc(13px * var(--font-scale, 1))', color: 'rgba(var(--text-rgb),0.7)', margin: '0 0 14px', lineHeight: 1.5 }}>
+                    {label.blurb}
+                  </p>
+                )}
+                {section === 'occupation' ? (
+                  (() => {
+                    const entries = Object.entries(r.scores).sort((a, b) => b[1] - a[1])
+                    const max = Math.max(1, ...entries.map((e) => e[1]))
+                    return entries.slice(0, 5).map(([key, value]) => (
+                      <div key={key} style={{ marginBottom: '6px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                          <span style={{ ...mono, color: 'var(--neon-white)' }}>{(OCCUPATION_SCORE_LABELS[key] ?? key).toUpperCase()}</span>
+                          <span style={mono}>{value}</span>
+                        </div>
+                        <div style={{ height: '5px', background: 'rgba(var(--fg-rgb),0.08)' }}>
+                          <div style={{ width: `${Math.round((value / max) * 100)}%`, height: '100%', background: meta.color }} />
+                        </div>
+                      </div>
+                    ))
+                  })()
+                ) : (
+                  SCORE_PAIRS[section].map(([lk, ll, rk, rl]) => (
+                    <PairBar key={lk} left={r.scores[lk] ?? 0} right={r.scores[rk] ?? 0} leftLabel={ll} rightLabel={rl} color={meta.color} />
+                  ))
+                )}
+                {r.community && (
+                  <Link to={`/community/${r.community.slug}`} className="tab-empty-link" style={{ display: 'inline-block', marginTop: '10px' }}>
+                    {r.community.icon} {r.community.name.toUpperCase()} →
+                  </Link>
+                )}
+              </div>
+            )
+          })}
+          {isMe && missingSections.length > 0 && (
+            <div className="card" style={{ padding: '18px 20px', borderStyle: 'dashed' }}>
+              <p style={{ ...mono, marginBottom: '10px' }}>STILL TO COMPLETE</p>
+              {missingSections.map((s) => (
+                <Link key={s} to={`/assess/${s}`} className="tab-empty-link" style={{ display: 'block', marginTop: '6px' }}>
+                  {SECTION_META[s].icon} TAKE THE {SECTION_META[s].label} ASSESSMENT →
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Posts */}
+      <p className="page-title" style={{ marginTop: '32px' }}>// <span>POSTS</span></p>
+      {posts === undefined ? (
+        <p style={mono}>LOADING…</p>
+      ) : posts.length === 0 ? (
+        <div className="empty-state" style={{ padding: '40px 20px' }}>
+          <div className="empty-state-icon" style={{ fontSize: 'calc(32px * var(--font-scale, 1))' }}>📷</div>
+          <p className="empty-state-text" style={{ fontSize: 'calc(11px * var(--font-scale, 1))' }}>NO POSTS YET</p>
+        </div>
+      ) : (
+        <div className="feed-container">
+          {posts.map((post) => (
+            <PostCard key={post._id} post={post} />
+          ))}
+        </div>
+      )}
+
+      {listTab && <UserListModal userId={profile._id} initialTab={listTab} onClose={() => setListTab(null)} />}
     </div>
   )
 }

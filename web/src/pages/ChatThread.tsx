@@ -63,11 +63,11 @@ export default function ChatThread() {
       <div style={{
         display: 'flex', alignItems: 'center', gap: '16px',
         marginBottom: '16px', paddingBottom: '16px',
-        borderBottom: '1px solid rgba(255,153,51,0.1)'
+        borderBottom: '1px solid rgba(var(--accent-rgb),0.1)'
       }}>
         <button
           onClick={() => navigate('/chat')}
-          style={{ background: 'none', border: 'none', color: 'var(--saffron)', cursor: 'pointer', fontFamily: "'Share Tech Mono'", fontSize: '13px', letterSpacing: '2px' }}
+          style={{ background: 'none', border: 'none', color: 'var(--saffron)', cursor: 'pointer', fontFamily: "var(--font-mono)", fontSize: 'calc(13px * var(--font-scale, 1))', letterSpacing: '2px' }}
         >
           ← BACK
         </button>
@@ -75,10 +75,10 @@ export default function ChatThread() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
             <UserAvatar user={otherUser} size={36} />
             <div>
-              <div style={{ fontFamily: "'Orbitron'", fontSize: '13px', letterSpacing: '2px', color: 'var(--neon-white)' }}>
+              <div style={{ fontFamily: "var(--font-display)", fontSize: 'calc(13px * var(--font-scale, 1))', letterSpacing: '2px', color: 'var(--neon-white)' }}>
                 {otherUser.displayName}
               </div>
-              <div style={{ fontFamily: "'Share Tech Mono'", fontSize: '10px', color: 'rgba(0,180,255,0.7)', letterSpacing: '1px' }}>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 'calc(10px * var(--font-scale, 1))', color: 'rgba(var(--accent3-rgb),0.7)', letterSpacing: '1px' }}>
                 🔒 E2E ENCRYPTED
               </div>
             </div>

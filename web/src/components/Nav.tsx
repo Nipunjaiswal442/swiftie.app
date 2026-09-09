@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
-import { useConvexAuth, useQuery } from 'convex/react'
+import { useConvexAuth, useMutation, useQuery } from 'convex/react'
 import { auth } from '../firebase'
 import { api } from '../../convex/_generated/api'
 import UserAvatar from './UserAvatar'
@@ -9,6 +9,7 @@ import UserAvatar from './UserAvatar'
 export default function Nav() {
   const { isAuthenticated } = useConvexAuth()
   const me = useQuery(api.users.getMe)
+  const setOffline = useMutation(api.users.setOffline)
   const navigate = useNavigate()
   const location = useLocation()
   const navRef = useRef<HTMLElement>(null)
@@ -25,6 +26,7 @@ export default function Nav() {
   }, [])
 
   const handleLogout = async () => {
+    try { await setOffline() } catch { /* best effort */ }
     await signOut(auth)
     navigate('/', { replace: true })
   }
@@ -61,6 +63,7 @@ export default function Nav() {
                   </Link>
                 </li>
               )}
+              <li><Link to="/settings" style={isActive('/settings')} title="Settings">⚙ SETTINGS</Link></li>
               <li><button onClick={handleLogout}>LOGOUT</button></li>
             </>
           )}
