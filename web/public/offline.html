@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0a12" />
+  <title>Offline — Swiftie</title>
+  <!--
+    Served by the service worker when a navigation fails and nothing is cached
+    for that URL. It must stand completely on its own: no bundle, no webfont,
+    no external request of any kind, because by definition there is no network
+    when this renders.
+  -->
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px max(24px, env(safe-area-inset-left)) calc(24px + env(safe-area-inset-bottom));
+      background: #0a0a12;
+      color: #e0e0ff;
+      font-family: 'Rajdhani', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      text-align: center;
+    }
+    .tricolour { position: fixed; top: 0; left: 0; right: 0; height: 4px; display: flex; }
+    .tricolour i { flex: 1; }
+    .tricolour i:nth-child(1) { background: #ff9933; }
+    .tricolour i:nth-child(2) { background: #ffffff; }
+    .tricolour i:nth-child(3) { background: #138808; }
+
+    .wrap { max-width: 420px; width: 100%; }
+
+    .chakra {
+      width: 88px; height: 88px; margin: 0 auto 28px;
+      border: 2px solid rgba(0, 68, 204, 0.55);
+      border-radius: 50%;
+      position: relative;
+      opacity: 0.75;
+    }
+    .chakra::before, .chakra::after {
+      content: ''; position: absolute; inset: 14px;
+      border: 1px solid rgba(0, 68, 204, 0.4);
+      border-radius: 50%;
+    }
+    .chakra::after { inset: 38px; background: rgba(0, 68, 204, 0.5); border: none; }
+
+    h1 {
+      font-family: 'Orbitron', 'Rajdhani', system-ui, sans-serif;
+      font-weight: 800;
+      font-size: clamp(22px, 6vw, 30px);
+      letter-spacing: clamp(3px, 1.6vw, 7px);
+      margin-bottom: 14px;
+    }
+    h1 .s { color: #ff9933; }
+    h1 .w { color: #ffffff; }
+    h1 .g { color: #00ff6a; }
+
+    p {
+      font-size: 16px;
+      line-height: 1.65;
+      color: #6b7094;
+      margin-bottom: 8px;
+    }
+    .hint {
+      font-family: 'Share Tech Mono', ui-monospace, Menlo, Consolas, monospace;
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #4a4f6b;
+      margin-top: 28px;
+    }
+
+    button {
+      margin-top: 28px;
+      min-height: 48px;
+      padding: 14px 40px;
+      font-family: 'Orbitron', 'Rajdhani', system-ui, sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #0a0a12;
+      background: linear-gradient(135deg, #ff9933, #ffffff 50%, #00ff6a);
+      border: none;
+      cursor: pointer;
+      clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+    }
+    button:active { opacity: 0.85; }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .chakra { animation: spin 24s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    }
+  </style>
+</head>
+<body>
+  <div class="tricolour"><i></i><i></i><i></i></div>
+
+  <div class="wrap">
+    <div class="chakra"></div>
+
+    <h1><span class="s">SW</span><span class="w">IF</span><span class="g">TIE</span></h1>
+
+    <p>You're offline.</p>
+    <p>Swiftie needs a connection to load your feed, communities and messages.</p>
+
+    <button type="button" onclick="location.reload()">Try again</button>
+
+    <p class="hint">// Connection lost</p>
+  </div>
+
+  <script>
+    // Reload on its own the moment the device comes back online.
+    window.addEventListener('online', function () { location.reload(); });
+  </script>
+</body>
+</html>
