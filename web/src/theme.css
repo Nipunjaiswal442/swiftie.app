@@ -41,6 +41,14 @@
   --nav-h: 60px;            /* height of the fixed top bar */
   --side-nav-w: 250px;      /* width of the vertical side menu */
   --side-nav-shift: 0px;    /* how far content moves when the menu is docked */
+  /* Installed on iOS the page runs under the status bar and home indicator
+     (apple-mobile-web-app-status-bar-style: black-translucent + viewport-fit=cover),
+     so every fixed edge has to step around them. Zero in a normal browser. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --tricolour-h: 4px;
+  /* Total height owned by the status bar, the tricolour strip and the top bar. */
+  --chrome-top: calc(var(--safe-top) + var(--tricolour-h) + var(--nav-h));
   color-scheme: dark;
 }
 
@@ -241,7 +249,12 @@ body {
 .tricolour-top {
   position: fixed;
   top: 0; left: 0; right: 0;
-  height: 4px;
+  /* Grows to cover the status bar and paints behind it, so the white iOS
+     clock and battery sit on our own background rather than on page content. */
+  height: calc(var(--tricolour-h) + var(--safe-top));
+  padding-top: var(--safe-top);
+  background: rgba(var(--nav-deep-rgb), 0.92);
+  backdrop-filter: blur(20px);
   z-index: 1000;
   display: flex;
 }
@@ -257,7 +270,7 @@ body {
  */
 .main-nav {
   position: fixed;
-  top: 4px; left: 0; right: 0;
+  top: calc(var(--safe-top) + var(--tricolour-h)); left: 0; right: 0;
   z-index: 999;
   height: var(--nav-h);
   padding: 0 clamp(12px, 3vw, 40px);
@@ -423,7 +436,7 @@ body {
 
 .side-nav {
   position: fixed;
-  top: calc(var(--nav-h) + 4px);
+  top: var(--chrome-top);
   left: 0;
   bottom: 0;
   z-index: 998;
@@ -729,7 +742,7 @@ footer.main-footer {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding-top: calc(var(--nav-h) + 12px);
+  padding-top: calc(var(--chrome-top) + 12px);
   padding-left: var(--side-nav-shift);
   transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -1008,8 +1021,10 @@ textarea.cyber-input { resize: vertical; min-height: 100px; }
   display: flex;
   flex-direction: column;
   height: calc(100vh - 180px);
-  /* dvh tracks the collapsing browser chrome on mobile; 100vh does not. */
-  height: calc(100dvh - 180px);
+  /* dvh tracks the collapsing browser chrome on mobile; 100vh does not.
+     Derived from the real top chrome rather than a magic number, so it stays
+     correct once the iOS status bar inset is in play. */
+  height: calc(100dvh - var(--chrome-top) - 110px);
   min-height: 320px;
 }
 .chat-messages {
@@ -1058,6 +1073,8 @@ textarea.cyber-input { resize: vertical; min-height: 100px; }
   display: flex;
   gap: 12px;
   padding-top: 16px;
+  /* Installed on iOS the composer would otherwise sit under the home indicator. */
+  padding-bottom: var(--safe-bottom);
   border-top: 1px solid rgba(var(--accent-rgb),0.1);
   align-items: flex-end;
 }
@@ -1180,7 +1197,7 @@ textarea.cyber-input { resize: vertical; min-height: 100px; }
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 80px 20px 40px;
+  padding: calc(var(--chrome-top) + 24px) 20px calc(40px + var(--safe-bottom));
   position: relative;
   z-index: 2;
 }
@@ -1229,7 +1246,7 @@ textarea.cyber-input { resize: vertical; min-height: 100px; }
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 80px 20px 40px;
+  padding: calc(var(--chrome-top) + 24px) 20px calc(40px + var(--safe-bottom));
   position: relative;
   z-index: 2;
 }
@@ -1465,7 +1482,7 @@ pre, code { white-space: pre-wrap; overflow-wrap: anywhere; }
   .profile-stats { gap: 24px; flex-wrap: wrap; justify-content: center; }
 
   /* Chat */
-  .chat-thread { height: calc(100dvh - 150px); }
+  .chat-thread { height: calc(100dvh - var(--chrome-top) - 86px); }
   .chat-bubble { max-width: 88%; }
   .chat-item { padding: 14px; gap: 12px; }
   .chat-input-row { gap: 8px; }
@@ -1475,7 +1492,7 @@ pre, code { white-space: pre-wrap; overflow-wrap: anywhere; }
   .cta-btn { padding: 15px 28px; letter-spacing: 2px; }
   .cta-btn-large { padding: 18px 28px; font-size: calc(14px * var(--font-scale, 1)); letter-spacing: 3px; }
   .login-card, .onboarding-card { padding: 32px 22px; }
-  .login-container, .onboarding-container { padding: calc(var(--nav-h) + 30px) 16px 40px; }
+  .login-container, .onboarding-container { padding: calc(var(--chrome-top) + 20px) 16px calc(40px + var(--safe-bottom)); }
   .modal-backdrop { padding: 12px; align-items: flex-end; }
   .modal-card { padding: 22px 18px; max-height: 88vh; max-height: 88dvh; }
   .settings-section { padding: 18px 14px; }
@@ -1789,6 +1806,6 @@ pre, code { white-space: pre-wrap; overflow-wrap: anywhere; }
 .suspended-screen {
   min-height: 100vh;
   display: flex; align-items: center; justify-content: center;
-  padding: 100px 20px 40px;
+  padding: calc(var(--chrome-top) + 24px) 20px calc(40px + var(--safe-bottom));
   position: relative; z-index: 2;
 }

@@ -108,8 +108,9 @@ export default function CommunityChatThread() {
           display: flex;
           flex-direction: column;
           height: calc(100vh - 120px);
-          /* dvh follows the mobile browser chrome so the composer stays reachable */
-          height: calc(100dvh - 120px);
+          /* dvh follows the mobile browser chrome so the composer stays reachable;
+             --chrome-top covers the iOS status bar inset when installed. */
+          height: calc(100dvh - var(--chrome-top) - 56px);
           min-height: 360px;
           padding: 0 24px;
           position: relative;
@@ -271,7 +272,8 @@ export default function CommunityChatThread() {
         }
         .cc-input-area {
           border-top: 1px solid rgba(var(--fg-rgb),0.06);
-          padding: 14px 0;
+          /* Bottom inset keeps the composer clear of the iPhone home indicator. */
+          padding: 14px 0 calc(14px + env(safe-area-inset-bottom, 0px));
           flex-shrink: 0;
         }
         .cc-non-member {
@@ -407,7 +409,7 @@ export default function CommunityChatThread() {
         }
 
         @media (max-width: 600px) {
-          .community-chat-page { padding: 0 12px; height: calc(100dvh - 96px); }
+          .community-chat-page { padding: 0 12px; height: calc(100dvh - var(--chrome-top) - 32px); }
           .cc-bubble-wrap { max-width: 86%; }
           .cc-members-panel { width: 100%; border-left: none; }
           .cc-header { gap: 10px; padding: 12px 0 10px; }
