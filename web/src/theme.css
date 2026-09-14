@@ -1349,6 +1349,94 @@ textarea.cyber-input { resize: vertical; min-height: 100px; }
 ::-webkit-scrollbar-thumb { background: rgba(var(--accent-rgb),0.3); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(var(--accent-rgb),0.5); }
 
+/* ═══════════════════ INSTALL PROMPT ═══════════════════ */
+.install-card {
+  position: fixed;
+  left: max(12px, env(safe-area-inset-left));
+  right: max(12px, env(safe-area-inset-right));
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 1500;
+  max-width: 520px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: rgba(var(--nav-deep-rgb), 0.97);
+  border: 1px solid rgba(var(--accent-rgb), 0.3);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.55);
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  animation: installRise 0.45s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+@keyframes installRise {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.install-icon { flex-shrink: 0; width: 44px; height: 44px; }
+.install-body { flex: 1; min-width: 0; }
+.install-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: calc(11px * var(--font-scale, 1));
+  letter-spacing: 2.5px;
+  color: var(--saffron);
+  margin-bottom: 4px;
+}
+.install-text {
+  font-family: var(--font-body);
+  font-size: calc(13px * var(--font-scale, 1));
+  line-height: 1.45;
+  color: rgba(var(--text-rgb), 0.75);
+}
+.install-text strong { color: var(--neon-white); font-weight: 600; }
+.install-share-glyph {
+  display: inline-block;
+  vertical-align: -3px;
+  margin: 0 2px;
+  color: var(--saffron);
+}
+.install-btn {
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 11px 20px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: calc(11px * var(--font-scale, 1));
+  letter-spacing: 2px;
+  color: var(--on-accent);
+  background: linear-gradient(135deg, var(--saffron), var(--green-glow));
+  border: none;
+  cursor: pointer;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+  transition: opacity 0.2s;
+}
+.install-btn:hover { opacity: 0.88; }
+.install-close {
+  flex-shrink: 0;
+  align-self: flex-start;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: calc(14px * var(--font-scale, 1));
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.install-close:hover { color: var(--saffron); }
+
+@media (max-width: 480px) {
+  .install-card { gap: 11px; padding: 12px 13px; }
+  .install-icon { width: 38px; height: 38px; }
+  .install-btn { padding: 11px 15px; letter-spacing: 1.5px; }
+}
+
 /* ═══════════════════ RESPONSIVE ═══════════════════ */
 
 /* Nothing should be able to push the page sideways. */

@@ -29,6 +29,7 @@ import AdminConsole from './pages/AdminConsole'
 import Nav from './components/Nav'
 import ProtectedRoute from './components/ProtectedRoute'
 import PresenceBeacon from './components/PresenceBeacon'
+import InstallPrompt from './components/InstallPrompt'
 
 import './theme.css'
 import './pages/Landing.css'
@@ -148,6 +149,7 @@ export default function App() {
     <ConvexProviderWithAuth client={convex} useAuth={useFirebaseAuth}>
       <AppearanceSync />
       <Router />
+      <InstallPrompt />
     </ConvexProviderWithAuth>
   )
 }
