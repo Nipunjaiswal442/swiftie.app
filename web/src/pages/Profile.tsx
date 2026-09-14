@@ -250,7 +250,7 @@ export default function Profile() {
           {isMe && <Link to="/discover" className="tab-empty-link" style={{ display: 'inline-block', marginTop: '12px' }}>GO TO DISCOVER →</Link>}
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px, 100%), 1fr))', gap: '14px' }}>
           {SECTION_ORDER.map((section) => {
             const r = resultBySection.get(section)
             if (!r) return null

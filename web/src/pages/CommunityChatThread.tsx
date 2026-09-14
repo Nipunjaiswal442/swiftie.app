@@ -108,6 +108,9 @@ export default function CommunityChatThread() {
           display: flex;
           flex-direction: column;
           height: calc(100vh - 120px);
+          /* dvh follows the mobile browser chrome so the composer stays reachable */
+          height: calc(100dvh - 120px);
+          min-height: 360px;
           padding: 0 24px;
           position: relative;
         }
@@ -339,6 +342,8 @@ export default function CommunityChatThread() {
           right: 0;
           width: 280px;
           height: 100vh;
+          height: 100dvh;
+          padding-bottom: env(safe-area-inset-bottom);
           background: rgba(8,8,20,0.97);
           border-left: 1px solid rgba(var(--fg-rgb),0.08);
           display: flex;
@@ -402,11 +407,17 @@ export default function CommunityChatThread() {
         }
 
         @media (max-width: 600px) {
-          .community-chat-page { padding: 0 12px; }
-          .cc-bubble-wrap { max-width: 82%; }
+          .community-chat-page { padding: 0 12px; height: calc(100dvh - 96px); }
+          .cc-bubble-wrap { max-width: 86%; }
           .cc-members-panel { width: 100%; border-left: none; }
+          .cc-header { gap: 10px; padding: 12px 0 10px; }
+          .cc-header-icon { font-size: calc(22px * var(--font-scale, 1)); }
           .cc-header-actions { gap: 6px; }
-          .cc-view-link, .cc-members-btn { display: none; }
+          /* The community page is reachable from Explore; members are not, so
+             the members button stays and only its count is trimmed. */
+          .cc-view-link { display: none; }
+          .cc-members-btn { padding: 8px 10px; letter-spacing: 1px; }
+          .cc-members-count { display: none; }
         }
       `}</style>
 
@@ -420,7 +431,7 @@ export default function CommunityChatThread() {
         </div>
         <div className="cc-header-actions">
           <button className="cc-members-btn" onClick={() => setShowMembers(true)}>
-            MEMBERS ({community.memberCount})
+            MEMBERS <span className="cc-members-count">({community.memberCount})</span>
           </button>
           <Link to={`/community/${community.slug}`} className="cc-view-link">VIEW ↗</Link>
         </div>

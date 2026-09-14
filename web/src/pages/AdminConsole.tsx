@@ -37,7 +37,7 @@ const ADMIN_CSS = `
   .admin-tab:hover { color: var(--neon-white); }
   .admin-tab.active { color: var(--saffron); border-bottom-color: var(--saffron); }
   .badge { background: #ff6b6b; color: #fff; font-family: var(--font-display); font-size: calc(9px * var(--font-scale, 1)); padding: 2px 6px; border-radius: 10px; }
-  .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr)); gap: 12px; margin-bottom: 20px; }
   .stat-tile { padding: 16px; background: rgba(var(--surface-rgb),0.6); border: 1px solid rgba(var(--fg-rgb),0.07); }
   .stat-num { font-family: var(--font-display); font-size: calc(22px * var(--font-scale, 1)); color: var(--saffron); }
   .stat-num.alert { color: #ff6b6b; }
@@ -71,12 +71,22 @@ const ADMIN_CSS = `
   .notif-title { font-family: var(--font-display); font-size: calc(12px * var(--font-scale, 1)); letter-spacing: 1.5px; color: var(--neon-white); flex: 1; min-width: 200px; }
   .notif-body { font-family: var(--font-body); font-size: calc(14px * var(--font-scale, 1)); color: rgba(var(--text-rgb),0.85); white-space: pre-wrap; line-height: 1.65; margin-top: 12px; }
   .notif-preview { font-family: var(--font-body); font-size: calc(13px * var(--font-scale, 1)); color: var(--text-dim); margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px 16px; margin: 12px 0; }
+  .kv { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr)); gap: 8px 16px; margin: 12px 0; }
   .kv div { font-family: var(--font-body); font-size: calc(13px * var(--font-scale, 1)); color: var(--neon-white); }
   .kv span { display: block; font-family: var(--font-mono); font-size: calc(9px * var(--font-scale, 1)); letter-spacing: 1.5px; color: var(--text-dim); text-transform: uppercase; }
   .content-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-top: 1px solid rgba(var(--fg-rgb),0.05); font-family: var(--font-body); font-size: calc(13px * var(--font-scale, 1)); color: rgba(var(--text-rgb),0.8); }
   .content-row p { flex: 1; margin: 0; white-space: pre-wrap; word-break: break-word; }
-  @media (max-width: 768px) { .admin-shell { padding: 12px; } .admin-toolbar .cyber-input { width: 100%; } }
+  @media (max-width: 768px) {
+    .admin-shell { padding: 12px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+    .admin-toolbar .cyber-input { width: 100%; }
+    .admin-header { padding: 12px 14px; }
+    .admin-panel { padding: 14px 12px; }
+    /* One swipeable strip beats three stacked rows of tabs. */
+    .admin-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .admin-tabs::-webkit-scrollbar { display: none; }
+    .admin-tab { white-space: nowrap; flex-shrink: 0; }
+    .notif-title { min-width: 0; }
+  }
 `
 
 const label = (u: { username?: string; displayName: string }) => (u.username ? `@${u.username}` : u.displayName)
