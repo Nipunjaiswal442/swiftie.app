@@ -37,7 +37,16 @@
   --font-body: 'Rajdhani', sans-serif;
   --font-mono: 'Share Tech Mono', monospace;
   --font-scale: 1;
+  /* ── Layout metrics shared by the top bar, the side menu and the content ── */
+  --nav-h: 60px;            /* height of the fixed top bar */
+  --side-nav-w: 250px;      /* width of the vertical side menu */
+  --side-nav-shift: 0px;    /* how far content moves when the menu is docked */
   color-scheme: dark;
+}
+
+/* The docked menu pushes the content aside; on phones it overlays instead. */
+@media (min-width: 1024px) {
+  html[data-nav="docked"] { --side-nav-shift: var(--side-nav-w); }
 }
 
 /* ═══════════════════ COLOUR PALETTES ═══════════════════ */
@@ -241,20 +250,28 @@ body {
 .tricolour-top .green-bar { flex: 1; background: var(--green); box-shadow: 0 0 20px var(--green-glow), 0 0 40px rgba(var(--accent2-glow-rgb),0.3); }
 
 /* ═══════════════════ NAV ═══════════════════ */
-nav.main-nav {
+/*
+ * The top bar is a slim header: menu button, wordmark, avatar. Every
+ * destination lives in the vertical side menu (.side-nav) below, which docks
+ * beside the content on wide screens and slides in over it on phones.
+ */
+.main-nav {
   position: fixed;
   top: 4px; left: 0; right: 0;
   z-index: 999;
-  padding: 16px 40px;
+  height: var(--nav-h);
+  padding: 0 clamp(12px, 3vw, 40px);
+  padding-left: max(clamp(12px, 3vw, 40px), env(safe-area-inset-left));
+  padding-right: max(clamp(12px, 3vw, 40px), env(safe-area-inset-right));
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 12px;
   background: rgba(var(--nav-rgb), 0.85);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(var(--accent-rgb), 0.15);
   transition: background 0.3s, border-color 0.3s;
 }
-nav.main-nav.scrolled {
+.main-nav.scrolled {
   background: rgba(var(--nav-deep-rgb), 0.95);
   border-bottom-color: rgba(var(--accent-rgb), 0.25);
 }
@@ -262,27 +279,70 @@ nav.main-nav.scrolled {
 .nav-logo {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: calc(22px * var(--font-scale, 1));
-  letter-spacing: 6px;
+  font-size: calc(clamp(16px, 4.5vw, 22px) * var(--font-scale, 1));
+  letter-spacing: clamp(3px, 1.4vw, 6px);
   background: linear-gradient(90deg, var(--saffron), var(--white-pure), var(--green-glow));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-decoration: none;
   cursor: pointer;
+  white-space: nowrap;
 }
 
-.nav-links {
+.nav-topbar-end {
+  margin-left: auto;
   display: flex;
-  gap: 32px;
-  list-style: none;
   align-items: center;
+  gap: 10px;
 }
-.nav-links a, .nav-links button {
+.nav-topbar-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  text-decoration: none;
+  border-radius: 50%;
+}
+.nav-signin {
   color: var(--text-dim);
   text-decoration: none;
   font-family: var(--font-mono);
   font-size: calc(13px * var(--font-scale, 1));
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 12px 8px;
+  transition: color 0.3s;
+}
+.nav-signin:hover { color: var(--saffron); }
+
+/*
+ * Anchor bar used by the public landing page (the dashboard uses .side-nav).
+ * On narrow screens it scrolls sideways instead of disappearing.
+ */
+.nav-links {
+  margin-left: auto;
+  display: flex;
+  gap: clamp(14px, 3vw, 32px);
+  list-style: none;
+  align-items: center;
+  /* A flex item defaults to min-width:auto and would refuse to shrink below its
+     content, so the horizontal scroll would never engage. */
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 14px 0;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.nav-links::-webkit-scrollbar { display: none; }
+.nav-links a, .nav-links button {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: calc(clamp(11px, 2.4vw, 13px) * var(--font-scale, 1));
   letter-spacing: 2px;
   text-transform: uppercase;
   transition: all 0.3s;
@@ -291,6 +351,7 @@ nav.main-nav.scrolled {
   border: none;
   cursor: pointer;
   padding: 0;
+  white-space: nowrap;
 }
 .nav-links a:hover, .nav-links button:hover {
   color: var(--saffron);
@@ -306,6 +367,175 @@ nav.main-nav.scrolled {
   transition: width 0.3s;
 }
 .nav-links a:hover::after { width: 100%; }
+
+/* ── Menu button (hamburger) ───────────────────────────────── */
+.nav-toggle {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid rgba(var(--accent-rgb), 0.2);
+  cursor: pointer;
+  transition: border-color 0.25s, background 0.25s;
+  -webkit-tap-highlight-color: transparent;
+}
+.nav-toggle:hover, .nav-toggle:focus-visible {
+  border-color: rgba(var(--accent-rgb), 0.55);
+  background: rgba(var(--accent-rgb), 0.08);
+}
+.nav-toggle-bars {
+  position: relative;
+  width: 20px;
+  height: 14px;
+  display: block;
+}
+.nav-toggle-bars span {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--saffron);
+  box-shadow: 0 0 6px rgba(var(--accent-rgb), 0.6);
+  transition: transform 0.28s ease, opacity 0.2s ease, top 0.28s ease;
+}
+.nav-toggle-bars span:nth-child(1) { top: 0; }
+.nav-toggle-bars span:nth-child(2) { top: 6px; }
+.nav-toggle-bars span:nth-child(3) { top: 12px; }
+.nav-toggle.is-open .nav-toggle-bars span:nth-child(1) { top: 6px; transform: rotate(45deg); }
+.nav-toggle.is-open .nav-toggle-bars span:nth-child(2) { opacity: 0; }
+.nav-toggle.is-open .nav-toggle-bars span:nth-child(3) { top: 6px; transform: rotate(-45deg); }
+
+/* ── Vertical side menu ────────────────────────────────────── */
+.side-nav-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 997;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(3px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.28s ease, visibility 0.28s;
+}
+.side-nav-backdrop.is-visible { opacity: 1; visibility: visible; }
+
+.side-nav {
+  position: fixed;
+  top: calc(var(--nav-h) + 4px);
+  left: 0;
+  bottom: 0;
+  z-index: 998;
+  width: var(--side-nav-w);
+  max-width: 86vw;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 14px calc(18px + env(safe-area-inset-bottom));
+  padding-left: max(14px, env(safe-area-inset-left));
+  background: rgba(var(--nav-deep-rgb), 0.97);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(var(--accent-rgb), 0.15);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  transform: translateX(-100%);
+  visibility: hidden;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s;
+}
+.side-nav.is-open { transform: translateX(0); visibility: visible; }
+
+.side-nav-me {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 10px;
+  margin-bottom: 6px;
+  text-decoration: none;
+  border: 1px solid rgba(var(--fg-rgb), 0.07);
+  background: rgba(var(--surface-rgb), 0.5);
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+  transition: border-color 0.25s;
+}
+.side-nav-me:hover { border-color: rgba(var(--accent-rgb), 0.35); }
+.side-nav-me-text { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.side-nav-me-name {
+  font-family: var(--font-display);
+  font-size: calc(12px * var(--font-scale, 1));
+  letter-spacing: 2px;
+  color: var(--neon-white);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.side-nav-me-handle {
+  font-family: var(--font-mono);
+  font-size: calc(10px * var(--font-scale, 1));
+  letter-spacing: 1px;
+  color: var(--saffron);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.side-nav-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.side-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 14px;
+  color: var(--text-dim);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: calc(13px * var(--font-scale, 1));
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  background: none;
+  border: 1px solid transparent;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.25s, background 0.25s, border-color 0.25s;
+  -webkit-tap-highlight-color: transparent;
+}
+.side-nav-link:hover, .side-nav-link:focus-visible {
+  color: var(--saffron);
+  background: rgba(var(--accent-rgb), 0.07);
+  border-left-color: rgba(var(--accent-rgb), 0.5);
+}
+.side-nav-link.is-active {
+  color: var(--saffron);
+  background: rgba(var(--accent-rgb), 0.11);
+  border-left-color: var(--saffron);
+  text-shadow: 0 0 12px rgba(var(--accent-rgb), 0.5);
+}
+.side-nav-icon {
+  flex-shrink: 0;
+  width: 22px;
+  text-align: center;
+  font-size: calc(15px * var(--font-scale, 1));
+}
+.side-nav-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.side-nav-foot {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid rgba(var(--fg-rgb), 0.07);
+}
+.side-nav-logout:hover, .side-nav-logout:focus-visible {
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.08);
+  border-left-color: rgba(255, 107, 107, 0.6);
+}
+
+/* Docked beside the content on wide screens — no backdrop, no page lock. */
+@media (min-width: 1024px) {
+  .side-nav-backdrop { display: none; }
+}
 
 /* ═══════════════════ SECTION BASE ═══════════════════ */
 .section-label {
@@ -460,7 +690,7 @@ footer.main-footer {
   letter-spacing: 3px;
   color: var(--text-dim);
 }
-.footer-links { display: flex; justify-content: center; gap: 24px; margin-top: 12px; }
+.footer-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px 24px; margin-top: 12px; }
 .footer-links a {
   font-family: var(--font-mono);
   font-size: calc(10px * var(--font-scale, 1));
@@ -499,16 +729,20 @@ footer.main-footer {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding-top: 80px; /* nav height */
+  padding-top: calc(var(--nav-h) + 12px);
+  padding-left: var(--side-nav-shift);
+  transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .app-content {
   flex: 1;
   max-width: 900px;
   width: 100%;
   margin: 0 auto;
-  padding: 32px 20px;
+  padding: 28px clamp(14px, 4vw, 20px);
+  padding-bottom: calc(28px + env(safe-area-inset-bottom));
   position: relative;
   z-index: 2;
+  min-width: 0;
 }
 
 /* ═══════════════════ CARD BASE ═══════════════════ */
@@ -774,6 +1008,9 @@ textarea.cyber-input { resize: vertical; min-height: 100px; }
   display: flex;
   flex-direction: column;
   height: calc(100vh - 180px);
+  /* dvh tracks the collapsing browser chrome on mobile; 100vh does not. */
+  height: calc(100dvh - 180px);
+  min-height: 320px;
 }
 .chat-messages {
   flex: 1;
@@ -972,6 +1209,12 @@ textarea.cyber-input { resize: vertical; min-height: 100px; }
   margin-bottom: 36px;
 }
 .form-group { margin-bottom: 24px; }
+/* Side-by-side fields that fall back to one column when there is no room. */
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+  gap: 16px;
+}
 .error-msg {
   color: #FF4455;
   font-family: var(--font-mono);
@@ -1107,14 +1350,87 @@ textarea.cyber-input { resize: vertical; min-height: 100px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(var(--accent-rgb),0.5); }
 
 /* ═══════════════════ RESPONSIVE ═══════════════════ */
+
+/* Nothing should be able to push the page sideways. */
+img, video, canvas, svg { max-width: 100%; }
+pre, code { white-space: pre-wrap; overflow-wrap: anywhere; }
+.app-content table { display: block; max-width: 100%; overflow-x: auto; }
+
+@media (max-width: 1023px) {
+  /* Touch pointers have no hover, and the crosshair cursor is meaningless. */
+  body { cursor: auto; }
+}
+
 @media (max-width: 768px) {
-  nav.main-nav { padding: 12px 20px; }
-  .nav-links { display: none; }
-  .app-content { padding: 24px 16px; }
-  .posts-grid { grid-template-columns: repeat(2, 1fr); }
-  .profile-stats { gap: 24px; }
-  .cta-btn-large { padding: 18px 36px; font-size: calc(14px * var(--font-scale, 1)); letter-spacing: 3px; }
-  .login-card, .onboarding-card { padding: 32px 24px; }
+  .main-nav { gap: 10px; }
+  .app-content { padding: 20px 14px calc(24px + env(safe-area-inset-bottom)); }
+  .page-title { margin-bottom: 18px; padding-bottom: 12px; }
+
+  /* Feed / posts */
+  .posts-grid { grid-template-columns: repeat(3, 1fr); gap: 3px; }
+  .post-card, .create-post-card { padding: 18px 14px; }
+  .post-actions { gap: 14px; flex-wrap: wrap; }
+  .post-image { max-height: 340px; }
+
+  /* Profile */
+  .profile-header { padding: 24px 14px; margin-bottom: 24px; }
+  .profile-stats { gap: 24px; flex-wrap: wrap; justify-content: center; }
+
+  /* Chat */
+  .chat-thread { height: calc(100dvh - 150px); }
+  .chat-bubble { max-width: 88%; }
+  .chat-item { padding: 14px; gap: 12px; }
+  .chat-input-row { gap: 8px; }
+  .send-btn { padding: 14px 16px; letter-spacing: 1px; }
+
+  /* Forms / cards */
+  .cta-btn { padding: 15px 28px; letter-spacing: 2px; }
+  .cta-btn-large { padding: 18px 28px; font-size: calc(14px * var(--font-scale, 1)); letter-spacing: 3px; }
+  .login-card, .onboarding-card { padding: 32px 22px; }
+  .login-container, .onboarding-container { padding: calc(var(--nav-h) + 30px) 16px 40px; }
+  .modal-backdrop { padding: 12px; align-items: flex-end; }
+  .modal-card { padding: 22px 18px; max-height: 88vh; max-height: 88dvh; }
+  .settings-section { padding: 18px 14px; }
+  .toggle-row { gap: 12px; }
+
+  /* Wrap the header rows that sit beside a title */
+  .modal-actions { justify-content: stretch; }
+  .modal-actions > * { flex: 1 1 auto; justify-content: center; }
+}
+
+@media (max-width: 420px) {
+  .app-content { padding-left: 12px; padding-right: 12px; }
+  .profile-stats { gap: 18px; }
+  .post-actions { gap: 10px; }
+  .side-nav { width: min(280px, 84vw); }
+}
+
+/*
+ * Inputs below 16px make iOS Safari zoom in on focus and never zoom back out.
+ * Hold every text field at 16px on touch screens regardless of the text-size
+ * setting, which only scales up from here anyway.
+ */
+@media (max-width: 1023px) {
+  .cyber-input,
+  .chat-input,
+  .comment-input,
+  .create-post-input,
+  input[type="text"], input[type="email"], input[type="password"],
+  input[type="search"], input[type="number"], input[type="url"],
+  textarea, select {
+    font-size: max(16px, calc(15px * var(--font-scale, 1)));
+  }
+}
+
+/* Comfortable touch targets for the small icon-style controls. */
+@media (pointer: coarse) {
+  .ghost-btn, .pill-btn, .post-action-btn, .comment-action, .follow-btn, .side-nav-link {
+    min-height: 40px;
+  }
+  .ghost-btn, .pill-btn { padding-top: 9px; padding-bottom: 9px; }
+  .switch { width: 48px; height: 28px; }
+  .switch::after { width: 20px; height: 20px; }
+  .switch.on::after { left: 25px; }
 }
 
 /* ═══════════════════ SMALL BUTTONS ═══════════════════ */
@@ -1235,7 +1551,7 @@ textarea.cyber-input { resize: vertical; min-height: 100px; }
 .comment-empty { font-family: var(--font-mono); font-size: calc(10px * var(--font-scale, 1)); letter-spacing: 1.5px; color: var(--text-dim); padding: 6px 0; }
 
 /* ═══════════════════ PEOPLE ═══════════════════ */
-.people-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.people-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(230px, 100%), 1fr)); gap: 12px; }
 .person-card {
   display: flex; align-items: center; gap: 12px;
   padding: 14px;
@@ -1320,7 +1636,7 @@ textarea.cyber-input { resize: vertical; min-height: 100px; }
 .settings-section { padding: 24px; margin-bottom: 20px; }
 .settings-section-title { font-family: var(--font-display); font-size: calc(13px * var(--font-scale, 1)); letter-spacing: 3px; color: var(--saffron); margin-bottom: 4px; }
 .settings-section-sub { font-family: var(--font-mono); font-size: calc(10px * var(--font-scale, 1)); letter-spacing: 1px; color: var(--text-dim); margin-bottom: 18px; line-height: 1.6; }
-.option-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.option-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr)); gap: 10px; }
 .option-card {
   padding: 12px;
   background: rgba(var(--surface-rgb), 0.6);

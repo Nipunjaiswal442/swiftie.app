@@ -212,7 +212,7 @@ export default function ProfileForm({ me, mode, submitLabel, onSaved }: Props) {
       </div>
 
       {/* ── Optional richer profile fields ───────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+      <div className="field-row">
         <div className="form-group" style={{ marginBottom: 0 }}>
           <label className="cyber-label" htmlFor="age">AGE <span style={{ color: 'var(--text-dim)' }}>(OPTIONAL)</span></label>
           <input id="age" className="cyber-input" type="number" placeholder="18" value={age} onChange={(e) => setAge(e.target.value)} min={13} max={120} />

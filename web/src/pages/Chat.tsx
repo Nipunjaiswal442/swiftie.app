@@ -48,6 +48,8 @@ export default function Chat() {
           display: flex;
           align-items: center;
           justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 10px;
           margin-bottom: 14px;
         }
         .add-community-btn {

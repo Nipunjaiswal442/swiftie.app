@@ -3,11 +3,12 @@
   position: relative;
   z-index: 2;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 120px 40px 80px;
+  padding: calc(var(--nav-h) + 60px) clamp(16px, 5vw, 40px) 80px;
   text-align: center;
 }
 
@@ -37,11 +38,13 @@
 .hero-title {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: calc(clamp(54px, 9vw, 110px) * var(--font-scale, 1));
-  letter-spacing: 12px;
-  line-height: 1;
+  font-size: calc(clamp(32px, 11vw, 110px) * var(--font-scale, 1));
+  letter-spacing: clamp(2px, 1.6vw, 12px);
+  line-height: 1.05;
   margin-bottom: 8px;
   animation: titleGlitch 0.8s ease-out;
+  max-width: 100%;
+  overflow-wrap: break-word;
 }
 .l1 { color: var(--saffron); text-shadow: 0 0 30px rgba(var(--accent-rgb),0.6), 0 0 60px rgba(var(--accent-rgb),0.3); }
 .l2 { color: var(--saffron-glow); text-shadow: 0 0 30px rgba(255,179,71,0.5); }
@@ -262,7 +265,7 @@
 /* ═══════════════════ THREE PILLARS ═══════════════════ */
 .pillars-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
   gap: 24px;
 }
 .pillar-card {
@@ -323,7 +326,7 @@
 /* ═══════════════════ HOW IT WORKS ═══════════════════ */
 .flow-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
   gap: 20px;
   margin-top: 30px;
 }
@@ -348,7 +351,7 @@
 /* ═══════════════════ TECH STACK ═══════════════════ */
 .tech-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
   gap: 16px;
 }
 .tech-item {
@@ -369,7 +372,7 @@
 /* ═══════════════════ PRINCIPLES ═══════════════════ */
 .principles-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
   gap: 20px;
 }
 .principle-card {
@@ -391,7 +394,7 @@
 /* ═══════════════════ STATS ═══════════════════ */
 .stats-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
   gap: 24px;
   padding: 60px 0;
 }
@@ -429,12 +432,13 @@
   padding: 100px 40px 60px;
   position: relative;
   z-index: 2;
+  overflow: hidden; /* keeps the 500px glow from widening the page on phones */
 }
 .final-cta-glow {
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  width: 500px; height: 500px;
+  width: min(500px, 140vw); height: 500px;
   background: radial-gradient(circle, rgba(var(--accent-rgb),0.06) 0%, transparent 70%);
   pointer-events: none;
 }
@@ -457,10 +461,24 @@
 
 /* ═══════════════════ RESPONSIVE ═══════════════════ */
 @media (max-width: 768px) {
-  .hero-section      { padding: 100px 20px 60px; }
+  .hero-section      { padding: calc(var(--nav-h) + 40px) 20px 60px; }
   .content-section   { padding: 60px 20px; }
   .final-cta         { padding: 60px 20px 40px; }
-  .cta-btn-large     { padding: 18px 36px; font-size: calc(14px * var(--font-scale, 1)); letter-spacing: 3px; }
+  .cta-btn-large     { padding: 18px 28px; font-size: calc(14px * var(--font-scale, 1)); letter-spacing: 3px; }
   .flow-container    { grid-template-columns: 1fr 1fr; }
   .pillars-grid      { grid-template-columns: 1fr; }
+  .pillar-card       { padding: 28px 20px; }
+  .chakra-container  { width: 100px; height: 100px; margin-bottom: 20px; }
+  .stats-row         { padding: 40px 0; gap: 14px; }
+  .stat-item         { padding: 22px 12px; }
+}
+
+@media (max-width: 480px) {
+  .hero-section    { padding: calc(var(--nav-h) + 32px) 16px 48px; }
+  .content-section { padding: 48px 16px; }
+  .final-cta       { padding: 48px 16px 32px; }
+  .flow-container  { grid-template-columns: 1fr; }
+  .tech-grid       { grid-template-columns: repeat(2, 1fr); }
+  .stats-row       { grid-template-columns: repeat(2, 1fr); }
+  .cta-btn-large   { padding: 16px 22px; letter-spacing: 2px; width: 100%; justify-content: center; }
 }
