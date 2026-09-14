@@ -1,6 +1,6 @@
 // Swiftie service worker
 // Bump CACHE_VERSION on every deploy that changes cached assets.
-const CACHE_VERSION = 'swiftie-v1';
+const CACHE_VERSION = 'swiftie-v2';
 const OFFLINE_URL = '/offline.html';
 
 // Keep this list small. Only the shell — not every asset on the site.

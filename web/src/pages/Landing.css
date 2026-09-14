@@ -8,7 +8,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: calc(var(--nav-h) + 60px) clamp(16px, 5vw, 40px) 80px;
+  padding: calc(var(--chrome-top) + 56px) clamp(16px, 5vw, 40px) calc(80px + var(--safe-bottom));
   text-align: center;
 }
 
@@ -461,7 +461,7 @@
 
 /* ═══════════════════ RESPONSIVE ═══════════════════ */
 @media (max-width: 768px) {
-  .hero-section      { padding: calc(var(--nav-h) + 40px) 20px 60px; }
+  .hero-section      { padding: calc(var(--chrome-top) + 36px) 20px calc(60px + var(--safe-bottom)); }
   .content-section   { padding: 60px 20px; }
   .final-cta         { padding: 60px 20px 40px; }
   .cta-btn-large     { padding: 18px 28px; font-size: calc(14px * var(--font-scale, 1)); letter-spacing: 3px; }
@@ -474,7 +474,7 @@
 }
 
 @media (max-width: 480px) {
-  .hero-section    { padding: calc(var(--nav-h) + 32px) 16px 48px; }
+  .hero-section    { padding: calc(var(--chrome-top) + 28px) 16px calc(48px + var(--safe-bottom)); }
   .content-section { padding: 48px 16px; }
   .final-cta       { padding: 48px 16px 32px; }
   .flow-container  { grid-template-columns: 1fr; }
